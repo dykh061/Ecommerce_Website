@@ -42,6 +42,6 @@ func CreateUser(appCtx appctx.AppContext) gin.HandlerFunc {
 			})
 			return
 		}
-		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data.ID))
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
 	}
 }

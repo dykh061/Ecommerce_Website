@@ -24,6 +24,7 @@ func ListProduct(appCtx appctx.AppContext) gin.HandlerFunc {
 			})
 		}
 
+		pagingData.Fulfill()
 		var filter productmodel.Filter
 
 		if err := c.ShouldBind(&filter); err != nil {

@@ -24,7 +24,18 @@ func (s *sqlStore) ListDataWithCondition(
 			db = db.Where("status = ?", *f.Status)
 		}
 	}
-	if err := db.Find(&result).Error; err != nil {
+
+	if err := db.Count(&paging.Total).Error; err != nil {
+		return nil, err
+	}
+
+	offset := (paging.Page - 1) * paging.Limit
+
+	if err := db.Offset(offset).
+		Limit(paging.Limit).
+		Order("id desc").
+		Find(&result).
+		Error; err != nil {
 		return nil, err
 	}
 	return result, nil

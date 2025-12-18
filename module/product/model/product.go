@@ -12,7 +12,7 @@ type Product struct {
 	Name        string          `json:"name" gorm:"type:varchar(255);not null"`
 	Description string          `json:"description" gorm:"type:text"`
 	BasePrice   decimal.Decimal `json:"base_price" gorm:"not null"`
-	Status      string          `json:"status" gorm:"type:varchar(20);not null"`
+	Status      string          `json:"status" gorm:"type:varchar(20);not null;index"`
 	CreatedAt   time.Time       `json:"created_at" gorm:"autoCreateTime"`
 }
 

@@ -24,7 +24,7 @@ func (biz *deleteBusiness) DeleteUser(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
-	if oldData.Status == "deleted" {
+	if oldData.Status == usermodel.UserStatusDeleted {
 		return errors.New("Data has been deleted")
 	}
 

@@ -7,6 +7,7 @@ import (
 
 	"OpenMarket/component/appctx"
 	productgin "OpenMarket/module/product/transport/gin"
+	ginseller "OpenMarket/module/seller/transport/gin"
 	ginuser "OpenMarket/module/user/transport/gin"
 
 	"github.com/gin-gonic/gin"
@@ -33,21 +34,17 @@ func main() {
 		log.Fatalf("cannot connect mysql: %v", err)
 	}
 
-	// if err := db.AutoMigrate(
-	// 	&usermodel.User{},
-	// 	&productmodel.Product{},
-	// 	// &sellermodel.Seller{},
-	// ); err != nil {
-	// 	log.Fatalf("cannot migrate: %v", err)
-	// }
-
 	appContext := appctx.NewAppContext(db)
 
 	r := gin.Default()
 	r.POST("/users", ginuser.CreateUser(appContext))
+	r.GET("/users/:id", ginuser.FindUser(appContext))
+	r.PUT("/users/:id", ginuser.UpdateUser(appContext))
+	r.DELETE("/users/:id", ginuser.DeleteUser(appContext))
 	r.POST("/products", productgin.CreateProduct(appContext))
 	r.GET("/products", productgin.ListProduct(appContext))
 	r.DELETE("/products/:id", productgin.DeleteProduct(appContext))
+	r.POST("/sellers", ginseller.CreateSeller(appContext))
 
 	port := os.Getenv("PORT")
 	if port == "" {

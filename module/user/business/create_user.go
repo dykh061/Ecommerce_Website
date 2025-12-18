@@ -3,6 +3,7 @@ package userbusiness
 import (
 	usermodel "OpenMarket/module/user/model"
 	"context"
+	"errors"
 )
 
 // CreateUserStore là INTERFACE (hợp đồng) mà tầng business yêu cầu.
@@ -14,7 +15,12 @@ import (
 // thì BẮT BUỘC phải implement interface này.
 
 type CreateUserStore interface {
-	Create(context context.Context, data *usermodel.UserCreate) error
+	Create(ctx context.Context, data *usermodel.UserCreate) error
+	FindDataWithCondition(
+		context context.Context,
+		condition map[string]interface{},
+		moreKeys ...string,
+	) (*usermodel.User, error)
 }
 
 // createUserBusiness là STRUCT đại diện cho nghiệp vụ "Tạo user".
@@ -47,6 +53,17 @@ func (biz *createUserBusiness) CreateUser(ctx context.Context, data *usermodel.U
 
 	// Business gọi gián tiếp xuống storage thông qua interface.
 	// Không cần biết storage dùng SQL, GORM hay gì khác.
+	if data.Email == "" {
+		return errors.New("email is required")
+	}
+
+	hasUser, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{"email": data.Email})
+	if err == nil && hasUser != nil {
+		return errors.New("email already exists")
+	}
+
+	data.Status = usermodel.UserStatusActive
+
 	if err := biz.store.Create(ctx, data); err != nil {
 		return err
 	}
