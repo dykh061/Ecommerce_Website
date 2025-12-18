@@ -3,6 +3,9 @@ package userstorage
 import (
 	usermodel "OpenMarket/module/user/model"
 	"context"
+	"errors"
+
+	"gorm.io/gorm"
 )
 
 func (s *sqlStore) FindDataWithCondition(
@@ -17,6 +20,9 @@ func (s *sqlStore) FindDataWithCondition(
 	var data usermodel.User
 
 	if err := s.db.Where(condition).First(&data).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &data, nil

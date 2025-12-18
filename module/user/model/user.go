@@ -1,10 +1,13 @@
 package usermodel
 
-import "time"
+import (
+	"time"
+)
 
 var (
 	UserStatusActive  = "active"
 	UserStatusDeleted = "deleted"
+	UserStatusBanned  = "banned"
 )
 
 type User struct {

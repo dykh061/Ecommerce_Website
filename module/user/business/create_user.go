@@ -31,7 +31,8 @@ type CreateUserStore interface {
 // store ở đây chính là dependency của business.
 
 type createUserBusiness struct {
-	store CreateUserStore
+	store  CreateUserStore
+	hasher PasswordHasher
 }
 
 // NewCreateUserBusiness là HÀM KHỞI TẠO business.
@@ -40,8 +41,8 @@ type createUserBusiness struct {
 // và được TRUYỀN VÀO cho business (Dependency Injection).
 //
 // Business không tự tạo storage cho mình.
-func NewCreateUserBusiness(store CreateUserStore) *createUserBusiness {
-	return &createUserBusiness{store: store}
+func NewCreateUserBusiness(store CreateUserStore, hasher PasswordHasher) *createUserBusiness {
+	return &createUserBusiness{store: store, hasher: hasher}
 }
 
 // CreateUser là USE CASE / LOGIC NGHIỆP VỤ tạo user.
@@ -57,11 +58,37 @@ func (biz *createUserBusiness) CreateUser(ctx context.Context, data *usermodel.U
 		return errors.New("email is required")
 	}
 
-	hasUser, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{"email": data.Email})
-	if err == nil && hasUser != nil {
-		return errors.New("email already exists")
+	if len(data.Password) < 8 {
+		return errors.New("password must be at least 8 characters")
 	}
 
+	hasUser, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{
+		"email":  data.Email,
+		"status": usermodel.UserStatusActive,
+	})
+	if err != nil {
+		return err
+	}
+	if hasUser != nil {
+		return errors.New("Email already exists!")
+	}
+
+	hasBannedUser, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{
+		"email":  data.Email,
+		"status": usermodel.UserStatusBanned,
+	})
+	if err != nil {
+		return err
+	}
+	if hasBannedUser != nil {
+		return errors.New("Email has been permanently banned")
+	}
+
+	hashedPassword, err := biz.hasher.Hash(data.Password)
+	if err != nil {
+		return err
+	}
+	data.Password = string(hashedPassword)
 	data.Status = usermodel.UserStatusActive
 
 	if err := biz.store.Create(ctx, data); err != nil {

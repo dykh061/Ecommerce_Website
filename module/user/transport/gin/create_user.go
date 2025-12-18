@@ -3,6 +3,7 @@ package ginuser
 import (
 	"OpenMarket/common"
 	"OpenMarket/component/appctx"
+	"OpenMarket/component/hasher"
 	userbusiness "OpenMarket/module/user/business"
 	usermodel "OpenMarket/module/user/model"
 	userstorage "OpenMarket/module/user/storage"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // CreateUser là hàm xử lý HTTP request tạo user.
@@ -34,7 +36,8 @@ func CreateUser(appCtx appctx.AppContext) gin.HandlerFunc {
 		}
 
 		store := userstorage.NewSQLStore(db)
-		biz := userbusiness.NewCreateUserBusiness(store)
+		hasher := hasher.NewBcryptHasher(bcrypt.DefaultCost)
+		biz := userbusiness.NewCreateUserBusiness(store, hasher)
 
 		if err := biz.CreateUser(c.Request.Context(), &data); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -42,6 +45,7 @@ func CreateUser(appCtx appctx.AppContext) gin.HandlerFunc {
 			})
 			return
 		}
+
 		c.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
 	}
 }
