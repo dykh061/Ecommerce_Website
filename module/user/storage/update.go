@@ -5,9 +5,9 @@ import (
 	"context"
 )
 
-func (s *sqlStore) Update(ctx context.Context, id int, data usermodel.UserUpdate) error {
+func (s *sqlStore) Update(ctx context.Context, condition map[string]interface{}, data usermodel.UserUpdate) error {
 	if err := s.db.Table(usermodel.UserUpdate{}.TableName()).
-		Where("id=?", id).
+		Where(condition).
 		Updates(data).
 		Error; err != nil {
 		return err

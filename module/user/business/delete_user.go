@@ -1,6 +1,7 @@
 package userbusiness
 
 import (
+	"OpenMarket/common"
 	usermodel "OpenMarket/module/user/model"
 	"context"
 	"errors"
@@ -24,7 +25,10 @@ func (biz *deleteBusiness) DeleteUser(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
-	if oldData.Status == usermodel.UserStatusDeleted {
+	if oldData == nil {
+		return errors.New("Data not found")
+	}
+	if oldData.Status == common.SystemStatusDeleted {
 		return errors.New("Data has been deleted")
 	}
 

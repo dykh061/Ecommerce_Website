@@ -1,6 +1,7 @@
 package userbusiness
 
 import (
+	"OpenMarket/common"
 	usermodel "OpenMarket/module/user/model"
 	"context"
 	"errors"
@@ -54,8 +55,8 @@ func (biz *createUserBusiness) CreateUser(ctx context.Context, data *usermodel.U
 
 	// Business gọi gián tiếp xuống storage thông qua interface.
 	// Không cần biết storage dùng SQL, GORM hay gì khác.
-	if data.Email == "" {
-		return errors.New("email is required")
+	if err := data.Validate(); err != nil {
+		return err
 	}
 
 	if len(data.Password) < 8 {
@@ -63,25 +64,18 @@ func (biz *createUserBusiness) CreateUser(ctx context.Context, data *usermodel.U
 	}
 
 	hasUser, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{
-		"email":  data.Email,
-		"status": usermodel.UserStatusActive,
+		"email": data.Email,
 	})
 	if err != nil {
 		return err
 	}
 	if hasUser != nil {
-		return errors.New("Email already exists!")
-	}
-
-	hasBannedUser, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{
-		"email":  data.Email,
-		"status": usermodel.UserStatusBanned,
-	})
-	if err != nil {
-		return err
-	}
-	if hasBannedUser != nil {
-		return errors.New("Email has been permanently banned")
+		if hasUser.IsBanned {
+			return errors.New("This account has been banned")
+		}
+		if hasUser.Status == common.SystemStatusActive {
+			return errors.New("Email already exists")
+		}
 	}
 
 	hashedPassword, err := biz.hasher.Hash(data.Password)
@@ -89,7 +83,6 @@ func (biz *createUserBusiness) CreateUser(ctx context.Context, data *usermodel.U
 		return err
 	}
 	data.Password = string(hashedPassword)
-	data.Status = usermodel.UserStatusActive
 
 	if err := biz.store.Create(ctx, data); err != nil {
 		return err

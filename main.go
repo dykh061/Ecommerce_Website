@@ -43,7 +43,7 @@ func main() {
 	r.DELETE("/users/:id", ginuser.DeleteUser(appContext))
 	r.POST("/products", productgin.CreateProduct(appContext))
 	r.GET("/products", productgin.ListProduct(appContext))
-	r.DELETE("/products/:id", productgin.DeleteProduct(appContext))
+	// r.DELETE("/products/:id", productgin.DeleteProduct(appContext))
 	r.POST("/sellers", ginseller.CreateSeller(appContext))
 
 	port := os.Getenv("PORT")

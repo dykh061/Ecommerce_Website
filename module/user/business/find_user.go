@@ -1,6 +1,7 @@
 package userbusiness
 
 import (
+	"OpenMarket/common"
 	usermodel "OpenMarket/module/user/model"
 	"context"
 )
@@ -23,9 +24,12 @@ func NewFindUserBusiness(store FindUserStore) *findUserBusiness {
 
 func (biz *findUserBusiness) FindUser(
 	ctx context.Context,
-	condition map[string]interface{},
+	id int,
 ) (*usermodel.User, error) {
-	result, err := biz.store.FindDataWithCondition(ctx, condition)
+	result, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{
+		"id":     id,
+		"status": common.SystemStatusActive,
+	})
 	if err != nil {
 		return nil, err
 	}

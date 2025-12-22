@@ -25,6 +25,6 @@ func CreateProduct(appCtx appctx.AppContext) gin.HandlerFunc {
 			ctx.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		ctx.JSON(http.StatusOK, common.SimpleSuccessResponse(data.ID))
+		ctx.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
 	}
 }

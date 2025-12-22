@@ -1,12 +1,13 @@
 package userbusiness
 
 import (
+	"OpenMarket/common"
 	usermodel "OpenMarket/module/user/model"
 	"context"
 )
 
 type UpdateUserStorage interface {
-	Update(ctx context.Context, id int, data usermodel.UserUpdate) error
+	Update(ctx context.Context, condition map[string]interface{}, data usermodel.UserUpdate) error
 	FindDataWithCondition(
 		context context.Context,
 		condition map[string]interface{},
@@ -23,11 +24,15 @@ func NewUpdateUserBusiness(storage UpdateUserStorage) *updateUserBusiness {
 }
 
 func (biz *updateUserBusiness) UpdateUser(ctx context.Context, id int, data usermodel.UserUpdate) error {
-	_, err := biz.storage.FindDataWithCondition(ctx, map[string]interface{}{"id": id})
+	condition := map[string]interface{}{
+		"id":     id,
+		"status": common.SystemStatusActive,
+	}
+	_, err := biz.storage.FindDataWithCondition(ctx, condition)
 	if err != nil {
 		return err
 	}
-	if err := biz.storage.Update(ctx, id, data); err != nil {
+	if err := biz.storage.Update(ctx, condition, data); err != nil {
 		return err
 	}
 	return nil

@@ -23,11 +23,16 @@ func FindUser(appCtx appctx.AppContext) gin.HandlerFunc {
 		store := userstorage.NewSQLStore(db)
 		biz := userbusiness.NewFindUserBusiness(store)
 
-		user, err := biz.FindUser(c.Request.Context(), map[string]interface{}{"id": id})
+		user, err := biz.FindUser(c.Request.Context(), id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
+		} else if user == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "user not found",
+			})
+			return
 		}
 		c.JSON(http.StatusOK, common.SimpleSuccessResponse(user))
 	}
