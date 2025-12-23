@@ -18,26 +18,20 @@ func UpdateUser(appCtx appctx.AppContext) gin.HandlerFunc {
 		var data usermodel.UserUpdate
 		var id int
 		if err := c.ShouldBind(&data); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			panic(err)
 		}
 
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "ID Invalid",
-			})
+			panic(err)
 		}
 
 		storage := userstorage.NewSQLStore(db)
 
 		biz := userbusiness.NewUpdateUserBusiness(storage)
 
-		if err := biz.UpdateUser(c, id, data); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+		if err := biz.UpdateUser(c.Request.Context(), id, data); err != nil {
+			panic(err)
 		}
 		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
 	}

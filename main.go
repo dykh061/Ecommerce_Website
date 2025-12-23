@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"OpenMarket/component/appctx"
+	"OpenMarket/middleware"
 	productgin "OpenMarket/module/product/transport/gin"
 	ginseller "OpenMarket/module/seller/transport/gin"
 	ginuser "OpenMarket/module/user/transport/gin"
@@ -29,16 +30,20 @@ func main() {
 		os.Getenv("DB_NAME"),
 	)
 
+	secretKey := os.Getenv("SYSTEM_SECRET")
+
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("cannot connect mysql: %v", err)
 	}
 
-	appContext := appctx.NewAppContext(db)
+	appContext := appctx.NewAppContext(db, secretKey)
 
 	r := gin.Default()
-	r.POST("/users", ginuser.CreateUser(appContext))
-	r.GET("/users/:id", ginuser.FindUser(appContext))
+	r.Use(middleware.Recover(appContext))
+	r.POST("/users", ginuser.Register(appContext))
+	r.POST("/authenticate", ginuser.Login(appContext))
+	r.GET("/profile", middleware.RequiredAuthenHeader(appContext), ginuser.Profile(appContext))
 	r.PUT("/users/:id", ginuser.UpdateUser(appContext))
 	r.DELETE("/users/:id", ginuser.DeleteUser(appContext))
 	r.POST("/products", productgin.CreateProduct(appContext))

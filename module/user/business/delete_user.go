@@ -23,17 +23,17 @@ func NewDeleteUserBusiness(store DeleteUserStore) *deleteBusiness {
 func (biz *deleteBusiness) DeleteUser(ctx context.Context, id int) error {
 	oldData, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{"id": id})
 	if err != nil {
-		return err
+		return common.ErrorDB(err)
 	}
 	if oldData == nil {
-		return errors.New("Data not found")
+		return common.ErrEntityNotFound(usermodel.EntityName, errors.New("user not found"))
 	}
 	if oldData.Status == common.SystemStatusDeleted {
-		return errors.New("Data has been deleted")
+		return common.ErrInvalidState(usermodel.EntityName, "deleted")
 	}
 
 	if err := biz.store.Delete(ctx, id); err != nil {
-		return err
+		return common.ErrCannotDeleteEntity(usermodel.EntityName, err)
 	}
 	return nil
 }

@@ -23,24 +23,21 @@ import (
 //
 // Hàm này KHÔNG làm việc trực tiếp với database.
 // Nó chỉ điều phối luồng dữ liệu giữa client và business.
-func CreateUser(appCtx appctx.AppContext) gin.HandlerFunc {
+func Register(appCtx appctx.AppContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		db := appCtx.GetMainDBConnection()
 		var data usermodel.UserCreate
-		if err := c.ShouldBindJSON(&data); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
 
-			return
+		if err := c.ShouldBindJSON(&data); err != nil {
+			panic(err)
 		}
 
 		store := userstorage.NewSQLStore(db)
 		hasher := hasher.NewBcryptHasher(bcrypt.DefaultCost)
-		biz := userbusiness.NewCreateUserBusiness(store, hasher)
+		biz := userbusiness.NewRegisterBusiness(store, hasher)
 
-		if err := biz.CreateUser(c.Request.Context(), &data); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+		if err := biz.Register(c.Request.Context(), &data); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 			return

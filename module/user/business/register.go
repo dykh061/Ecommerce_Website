@@ -5,6 +5,7 @@ import (
 	usermodel "OpenMarket/module/user/model"
 	"context"
 	"errors"
+	"strings"
 )
 
 // CreateUserStore là INTERFACE (hợp đồng) mà tầng business yêu cầu.
@@ -15,7 +16,7 @@ import (
 // Bất kỳ storage nào muốn được business sử dụng
 // thì BẮT BUỘC phải implement interface này.
 
-type CreateUserStore interface {
+type RegisterStore interface {
 	Create(ctx context.Context, data *usermodel.UserCreate) error
 	FindDataWithCondition(
 		context context.Context,
@@ -31,8 +32,8 @@ type CreateUserStore interface {
 //
 // store ở đây chính là dependency của business.
 
-type createUserBusiness struct {
-	store  CreateUserStore
+type registerBusiness struct {
+	store  RegisterStore
 	hasher PasswordHasher
 }
 
@@ -42,8 +43,8 @@ type createUserBusiness struct {
 // và được TRUYỀN VÀO cho business (Dependency Injection).
 //
 // Business không tự tạo storage cho mình.
-func NewCreateUserBusiness(store CreateUserStore, hasher PasswordHasher) *createUserBusiness {
-	return &createUserBusiness{store: store, hasher: hasher}
+func NewRegisterBusiness(store RegisterStore, hasher PasswordHasher) *registerBusiness {
+	return &registerBusiness{store: store, hasher: hasher}
 }
 
 // CreateUser là USE CASE / LOGIC NGHIỆP VỤ tạo user.
@@ -51,30 +52,35 @@ func NewCreateUserBusiness(store CreateUserStore, hasher PasswordHasher) *create
 // Hàm này sẽ được gọi từ handler (Gin / HTTP).
 // Business chỉ điều phối nghiệp vụ, không biết DB xử lý thế nào.
 
-func (biz *createUserBusiness) CreateUser(ctx context.Context, data *usermodel.UserCreate) error {
+func (biz *registerBusiness) Register(ctx context.Context, data *usermodel.UserCreate) error {
 
 	// Business gọi gián tiếp xuống storage thông qua interface.
 	// Không cần biết storage dùng SQL, GORM hay gì khác.
-	if err := data.Validate(); err != nil {
-		return err
+	data.Name = strings.TrimSpace(data.Name)
+	if data.Name == "" {
+		return common.ErrMissingField("name")
 	}
 
 	if len(data.Password) < 8 {
-		return errors.New("password must be at least 8 characters")
+		return common.ErrInvalidField("password", "must be at least 8 characters")
 	}
 
 	hasUser, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{
 		"email": data.Email,
 	})
 	if err != nil {
-		return err
+		return common.ErrorDB(err)
 	}
+
 	if hasUser != nil {
 		if hasUser.IsBanned {
-			return errors.New("This account has been banned")
+			return common.ErrInvalidState(usermodel.EntityName, "user is banned")
 		}
 		if hasUser.Status == common.SystemStatusActive {
-			return errors.New("Email already exists")
+			return common.ErrEmailAlreadyExists(errors.New("Email already exists"))
+		}
+		if hasUser.Status == common.SystemStatusDeleted {
+			return common.ErrInvalidState(usermodel.EntityName, "deleted")
 		}
 	}
 
@@ -85,7 +91,7 @@ func (biz *createUserBusiness) CreateUser(ctx context.Context, data *usermodel.U
 	data.Password = string(hashedPassword)
 
 	if err := biz.store.Create(ctx, data); err != nil {
-		return err
+		return common.ErrCannotCreateEntity(usermodel.EntityName, err)
 	}
 	return nil
 }

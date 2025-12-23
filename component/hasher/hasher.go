@@ -22,3 +22,10 @@ func (h *BcryptHasher) Hash(raw string) (string, error) {
 	}
 	return string(hashed), nil
 }
+func (h *BcryptHasher) Compare(hashed, raw string) bool {
+	err := bcrypt.CompareHashAndPassword(
+		[]byte(hashed),
+		[]byte(raw),
+	)
+	return err == nil
+}

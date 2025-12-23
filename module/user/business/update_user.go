@@ -4,6 +4,7 @@ import (
 	"OpenMarket/common"
 	usermodel "OpenMarket/module/user/model"
 	"context"
+	"errors"
 )
 
 type UpdateUserStorage interface {
@@ -28,12 +29,19 @@ func (biz *updateUserBusiness) UpdateUser(ctx context.Context, id int, data user
 		"id":     id,
 		"status": common.SystemStatusActive,
 	}
-	_, err := biz.storage.FindDataWithCondition(ctx, condition)
+	oldData, err := biz.storage.FindDataWithCondition(ctx, condition)
 	if err != nil {
-		return err
+		return common.ErrorDB(err)
 	}
+	if oldData == nil {
+		return common.ErrEntityNotFound(usermodel.EntityName, errors.New("user not found"))
+	}
+	if oldData.IsBanned {
+		return common.ErrInvalidState(usermodel.EntityName, "banned")
+	}
+
 	if err := biz.storage.Update(ctx, condition, data); err != nil {
-		return err
+		return common.ErrCannotUpdateEntity(usermodel.EntityName, err)
 	}
 	return nil
 }

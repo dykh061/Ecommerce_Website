@@ -2,9 +2,9 @@ package usermodel
 
 import (
 	"OpenMarket/common"
-	"errors"
-	"strings"
 )
+
+const EntityName = "User"
 
 type User struct {
 	common.SQLModel `json:",inline"`
@@ -24,14 +24,6 @@ type UserCreate struct {
 	Phone    string `json:"phone" gorm:"type:varchar(50)"`
 }
 
-func (data *UserCreate) Validate() error {
-	data.Name = strings.TrimSpace(data.Name)
-
-	if data.Name == "" {
-		return ErrNameIsEmpty
-	}
-	return nil
-}
 func (UserCreate) TableName() string { return User{}.TableName() }
 
 type UserUpdate struct {
@@ -44,6 +36,9 @@ type UserUpdate struct {
 
 func (UserUpdate) TableName() string { return User{}.TableName() }
 
-var (
-	ErrNameIsEmpty = errors.New("Name can not be empty")
-)
+type UserLogin struct {
+	Email    string `json:"email" form:"email" gorm:"column:email;"`
+	Password string `json:"password" form:"password" gorm:"column:password;"`
+}
+
+func (UserLogin) TableName() string { return User{}.TableName() }

@@ -17,9 +17,15 @@ func (s *sqlStore) FindDataWithCondition(
 	// vì khi về struct rỗng sẽ bị mất memory nhiều hơn nil
 ) (*usermodel.User, error) {
 
+	db := s.db.Table(usermodel.User{}.TableName())
+
+	for i := range moreKeys {
+		db = db.Preload(moreKeys[i])
+	}
+
 	var data usermodel.User
 
-	if err := s.db.Where(condition).First(&data).Error; err != nil {
+	if err := db.Where(condition).First(&data).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
