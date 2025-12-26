@@ -12,6 +12,7 @@ type Product struct {
 	Name            string          `json:"name" gorm:"type:varchar(255);not null"`
 	Description     string          `json:"description" gorm:"type:text"`
 	BasePrice       decimal.Decimal `json:"base_price" gorm:"not null"`
+	Cover           *common.Images  `json:"cover" gorm:"column:cover;"`
 }
 
 func (Product) TableName() string { return "products" }
@@ -21,6 +22,7 @@ type ProductCreate struct {
 	Name        string          `json:"name" gorm:"type:varchar(255);not null"`
 	Description string          `json:"description" gorm:"type:text"`
 	BasePrice   decimal.Decimal `json:"base_price" gorm:"not null"`
+	Cover       *common.Images  `json:"cover" gorm:"column:cover;"`
 }
 
 func (ProductCreate) TableName() string { return Product{}.TableName() }
@@ -29,6 +31,7 @@ type ProductUpdate struct {
 	Name        *string          `json:"name" gorm:"type:varchar(255);not null"`
 	Description *string          `json:"description" gorm:"type:text"`
 	BasePrice   *decimal.Decimal `json:"base_price" gorm:"not null"`
+	Cover       *common.Images   `json:"cover" gorm:"column:cover;"`
 }
 
 func (ProductUpdate) TableName() string { return Product{}.TableName() }
