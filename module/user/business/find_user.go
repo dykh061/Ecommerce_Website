@@ -1,37 +1,28 @@
 package userbusiness
 
 import (
-	"OpenMarket/common"
 	usermodel "OpenMarket/module/user/model"
 	"context"
 )
 
-type FindUserStore interface {
-	FindDataWithCondition(
-		context context.Context,
-		condition map[string]interface{},
-		moreKeys ...string,
-	) (*usermodel.User, error)
-}
-
 type findUserBusiness struct {
-	store FindUserStore
+	repo ActiveUserFinder
 }
 
-func NewFindUserBusiness(store FindUserStore) *findUserBusiness {
-	return &findUserBusiness{store: store}
+func NewFindUserBusiness(repo ActiveUserFinder) *findUserBusiness {
+	return &findUserBusiness{repo: repo}
 }
 
 func (biz *findUserBusiness) FindUser(
 	ctx context.Context,
 	id int,
 ) (*usermodel.User, error) {
-	result, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{
-		"id":     id,
-		"status": common.SystemStatusActive,
-	})
+	result, err := biz.repo.FindActiveUserByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if result == nil {
+		return nil, nil
 	}
 	return result, nil
 }

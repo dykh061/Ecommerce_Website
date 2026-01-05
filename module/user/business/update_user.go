@@ -7,29 +7,31 @@ import (
 	"errors"
 )
 
-type UpdateUserStorage interface {
-	Update(ctx context.Context, condition map[string]interface{}, data usermodel.UserUpdate) error
-	FindDataWithCondition(
-		context context.Context,
-		condition map[string]interface{},
-		moreKeys ...string,
-	) (*usermodel.User, error)
+type UpdateUserRepo interface {
+	UpdateUserById(
+		ctx context.Context,
+		id int,
+		data usermodel.UserUpdate,
+	) error
 }
 
 type updateUserBusiness struct {
-	storage UpdateUserStorage
+	repo   UpdateUserRepo
+	finder ActiveUserFinder
 }
 
-func NewUpdateUserBusiness(storage UpdateUserStorage) *updateUserBusiness {
-	return &updateUserBusiness{storage: storage}
+func NewUpdateUserBusiness(
+	repo UpdateUserRepo,
+	finder ActiveUserFinder,
+) *updateUserBusiness {
+	return &updateUserBusiness{
+		repo:   repo,
+		finder: finder,
+	}
 }
 
 func (biz *updateUserBusiness) UpdateUser(ctx context.Context, id int, data usermodel.UserUpdate) error {
-	condition := map[string]interface{}{
-		"id":     id,
-		"status": common.SystemStatusActive,
-	}
-	oldData, err := biz.storage.FindDataWithCondition(ctx, condition)
+	oldData, err := biz.finder.FindActiveUserByID(ctx, id)
 	if err != nil {
 		return common.ErrorDB(err)
 	}
@@ -39,8 +41,7 @@ func (biz *updateUserBusiness) UpdateUser(ctx context.Context, id int, data user
 	if oldData.IsBanned {
 		return common.ErrInvalidState(usermodel.EntityName, "banned")
 	}
-
-	if err := biz.storage.Update(ctx, condition, data); err != nil {
+	if err := biz.repo.UpdateUserById(ctx, id, data); err != nil {
 		return common.ErrCannotUpdateEntity(usermodel.EntityName, err)
 	}
 	return nil

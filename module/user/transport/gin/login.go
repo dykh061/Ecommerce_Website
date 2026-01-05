@@ -7,6 +7,7 @@ import (
 	"OpenMarket/component/tokenprovider/jwt"
 	userbusiness "OpenMarket/module/user/business"
 	usermodel "OpenMarket/module/user/model"
+	srrepository "OpenMarket/module/user/repository"
 	userstorage "OpenMarket/module/user/storage"
 
 	"github.com/gin-gonic/gin"
@@ -27,8 +28,9 @@ func Login(appCtx appctx.AppContext) gin.HandlerFunc {
 
 		storage := userstorage.NewSQLStore(db)
 		hasher := hasher.NewBcryptHasher(bcrypt.DefaultCost)
-		business := userbusiness.NewLoginBusiness(storage, tokenProvider, hasher, 60*60*24*30)
-		account, err := business.Login(c.Request.Context(), &loginUserData)
+		frepo := srrepository.NewFindUserWithEmailRepo(storage)
+		biz := userbusiness.NewLoginBusiness(frepo, tokenProvider, hasher, 60*60*24*30)
+		account, err := biz.Login(c.Request.Context(), &loginUserData)
 		if err != nil {
 			panic(err)
 		}

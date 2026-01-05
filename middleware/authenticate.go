@@ -20,6 +20,7 @@ func WrongErrorAuthenHeader(err error) *common.AppError {
 	)
 }
 
+// kiểm tra có đúng định dạng Bearer <token> không
 func extractTokenFromHeaderString(s string) (string, error) {
 	parts := strings.Split(s, " ")
 	if parts[0] != "Bearer" || len(parts) < 2 || strings.TrimSpace(parts[1]) == "" {
@@ -28,6 +29,9 @@ func extractTokenFromHeaderString(s string) (string, error) {
 	return parts[1], nil
 }
 
+// middleware kiểm tra header Authorization có hợp lệ không
+// nếu hợp lệ thì lấy thông tin user từ token và lưu vào context
+// nếu không hợp lệ thì trả về lỗi
 func RequiredAuthenHeader(appCtx appctx.AppContext) func(c *gin.Context) {
 	tokenProvider := jwt.NewTokenJWTProvider(appCtx.SecretKey())
 	return func(c *gin.Context) {

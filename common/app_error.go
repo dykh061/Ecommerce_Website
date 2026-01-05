@@ -119,6 +119,37 @@ func ErrInternal(err error) *AppError {
 	return NewFullErrorResponse(http.StatusInternalServerError, err, "something went wrong in the server", err.Error(), "ErrInternal")
 }
 
+// ErrUserAlreadyHasSeller
+// DÙNG KHI:
+// - User cố tạo shop mới nhưng đã có shop
+//
+// HTTP: 400
+func ErrUserAlreadyHasSeller(err error) *AppError {
+	if err == nil {
+		err = errors.New("user already has seller")
+	}
+
+	return NewErrorResponse(
+		err,
+		"user already has a shop",
+		err.Error(),
+		"ErrUserAlreadyHasSeller",
+	)
+}
+
+func ErrSellerWasSoftDeleted(err error) *AppError {
+	if err == nil {
+		err = errors.New("seller was soft deleted")
+	}
+
+	return NewErrorResponse(
+		err,
+		"you are not allowed to create a shop",
+		err.Error(),
+		"ErrSellerWasSoftDeleted",
+	)
+}
+
 // ErrCannotListEntity
 // DÙNG KHI:
 // - Không thể lấy danh sách entity (list / filter / pagination)
@@ -317,6 +348,52 @@ func ErrCannotUpdateEntity(entity string, err error) *AppError {
 		fmt.Sprintf("cannot update %s", strings.ToLower(entity)),
 		err.Error(),
 		fmt.Sprintf("ErrCannotUpdate%s", entity),
+	)
+}
+
+// ErrCannotReadFile
+// DÙNG KHI:
+// - Không đọc được file upload
+// - io.ReadAll(file) fail
+// - file.Open() fail
+//
+// HTTP: 400 (client gửi file lỗi hoặc không hợp lệ)
+func ErrCannotReadFile(err error) *AppError {
+	if err == nil {
+		err = errors.New("cannot read file")
+	}
+
+	return NewErrorResponse(
+		err,
+		"cannot read file",
+		err.Error(),
+		"ErrCannotReadFile",
+	)
+}
+
+// ErrCannotUploadFile
+// DÙNG KHI:
+// - Upload file lên MinIO / S3 thất bại
+// - PutObject error
+// - Network lỗi
+// - Bucket không tồn tại
+// - Permission deny
+//
+// HTTP: 500
+// Lý do:
+// - Client gửi file đúng
+// - Nhưng hệ thống KHÔNG upload được
+func ErrCannotUploadFile(err error) *AppError {
+	if err == nil {
+		err = errors.New("cannot upload file")
+	}
+
+	return NewFullErrorResponse(
+		http.StatusInternalServerError,
+		err,
+		"cannot upload file",
+		err.Error(),
+		"ErrCannotUploadFile",
 	)
 }
 

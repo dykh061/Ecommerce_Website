@@ -17,6 +17,10 @@ type User struct {
 
 func (User) TableName() string { return "users" }
 
+func (u *User) Mask() {
+	u.GenUID(common.DbTypeUser)
+}
+
 type UserCreate struct {
 	Name     string `json:"name" gorm:"type:varchar(255);not null"`
 	Email    string `json:"email" gorm:"type:varchar(255);uniqueIndex;not null"`
@@ -42,3 +46,11 @@ type UserLogin struct {
 }
 
 func (UserLogin) TableName() string { return User{}.TableName() }
+
+func (u *User) GetUserId() int {
+	return u.Id
+}
+
+func (u *User) GetUserEmail() string {
+	return u.Email
+}

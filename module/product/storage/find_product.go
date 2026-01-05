@@ -5,7 +5,7 @@ import (
 	"context"
 )
 
-func (s *sqlStore) FindDataWithCondition(
+func (s *sqlStore) FindProductWithCondition(
 	context context.Context,
 	condition map[string]interface{},
 	moreKeys ...string,

@@ -5,7 +5,10 @@ import (
 	"OpenMarket/component/appctx"
 	productbusiness "OpenMarket/module/product/business"
 	productmodel "OpenMarket/module/product/model"
+	productrepository "OpenMarket/module/product/repository"
 	productstorage "OpenMarket/module/product/storage"
+	sellerrepository "OpenMarket/module/seller/repository"
+	sellerstorage "OpenMarket/module/seller/storage"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,14 +17,20 @@ import (
 func CreateProduct(appCtx appctx.AppContext) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		db := appCtx.GetMainDBConnection()
+		requester, ok := ctx.MustGet(common.CurrentUser).(common.Requester)
+		if !ok {
+			panic(common.ErrUnauthorized(nil))
+		}
 		var data productmodel.ProductCreate
 		if err := ctx.ShouldBind(&data); err != nil {
-			ctx.JSON(400, gin.H{"error": err.Error()})
-			return
+			panic(common.InvalidRequestError(nil))
 		}
-		store := productstorage.NewSQLStore(db)
-		biz := productbusiness.NewCreateProductBusiness(store)
-		if err := biz.CreateProduct(ctx.Request.Context(), &data); err != nil {
+		productStore := productstorage.NewSQLStore(db)
+		sellerStore := sellerstorage.NewSQLStore(db)
+		productRepo := productrepository.NewCreateProductRepo(productStore)
+		sellerRepo := sellerrepository.NewGetSellerRepo(sellerStore)
+		biz := productbusiness.NewCreateProductBusiness(productRepo, sellerRepo)
+		if err := biz.CreateProduct(ctx.Request.Context(), requester.GetUserId(), &data); err != nil {
 			ctx.JSON(400, gin.H{"error": err.Error()})
 			return
 		}

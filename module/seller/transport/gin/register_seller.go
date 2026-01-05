@@ -5,6 +5,7 @@ import (
 	"OpenMarket/component/appctx"
 	sellerbusiness "OpenMarket/module/seller/business"
 	sellermodel "OpenMarket/module/seller/model"
+	sellerrepository "OpenMarket/module/seller/repository"
 	sellerstorage "OpenMarket/module/seller/storage"
 	"net/http"
 
@@ -16,18 +17,20 @@ func CreateSeller(appCtx appctx.AppContext) gin.HandlerFunc {
 		db := appCtx.GetMainDBConnection()
 		var data sellermodel.SellerCreate
 		if err := ctx.ShouldBind(&data); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			panic(common.InvalidRequestError(err))
 		}
-
+		u, ok := ctx.MustGet(common.CurrentUser).(common.Requester)
+		if !ok {
+			panic(common.ErrUnauthorized(nil))
+		}
+		data.UserID = u.GetUserId()
 		store := sellerstorage.NewSQLStore(db)
-		biz := sellerbusiness.NewCreateSellerBusiness(store)
+		crepo := sellerrepository.NewCreateSellerRepo(store)
+		frepo := sellerrepository.NewFindSellerRepo(store)
+		biz := sellerbusiness.NewCreateSellerBusiness(crepo, frepo)
 
-		if err := biz.CreateSeller(ctx.Request.Context(), &data); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+		if err := biz.CreateSeller(ctx.Request.Context(), u.GetUserId(), &data); err != nil {
+			panic(err)
 		}
 		ctx.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
 	}

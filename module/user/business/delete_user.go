@@ -7,21 +7,30 @@ import (
 	"errors"
 )
 
-type DeleteUserStore interface {
-	FindDataWithCondition(context context.Context, condition map[string]interface{}, moreKeys ...string) (*usermodel.User, error)
-	Delete(ctx context.Context, id int) error
+type DeleteUserRepo interface {
+	DeleteUserByID(
+		ctx context.Context,
+		id int,
+	) error
 }
 
 type deleteBusiness struct {
-	store DeleteUserStore
+	fstorage ActiveUserFinder
+	dstorage DeleteUserRepo
 }
 
-func NewDeleteUserBusiness(store DeleteUserStore) *deleteBusiness {
-	return &deleteBusiness{store: store}
+func NewDeleteUserBusiness(
+	fstorage ActiveUserFinder,
+	dstorage DeleteUserRepo,
+) *deleteBusiness {
+	return &deleteBusiness{
+		fstorage: fstorage,
+		dstorage: dstorage,
+	}
 }
 
 func (biz *deleteBusiness) DeleteUser(ctx context.Context, id int) error {
-	oldData, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{"id": id})
+	oldData, err := biz.fstorage.FindActiveUserByID(ctx, id)
 	if err != nil {
 		return common.ErrorDB(err)
 	}
@@ -32,7 +41,7 @@ func (biz *deleteBusiness) DeleteUser(ctx context.Context, id int) error {
 		return common.ErrInvalidState(usermodel.EntityName, "deleted")
 	}
 
-	if err := biz.store.Delete(ctx, id); err != nil {
+	if err := biz.dstorage.DeleteUserByID(ctx, id); err != nil {
 		return common.ErrCannotDeleteEntity(usermodel.EntityName, err)
 	}
 	return nil

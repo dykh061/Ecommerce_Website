@@ -5,6 +5,7 @@ import (
 	"OpenMarket/component/appctx"
 	userbusiness "OpenMarket/module/user/business"
 	usermodel "OpenMarket/module/user/model"
+	srrepository "OpenMarket/module/user/repository"
 	userstorage "OpenMarket/module/user/storage"
 	"net/http"
 	"strconv"
@@ -26,13 +27,25 @@ func UpdateUser(appCtx appctx.AppContext) gin.HandlerFunc {
 			panic(err)
 		}
 
+		u, ok := c.MustGet(common.CurrentUser).(common.Requester)
+		if !ok {
+			panic(common.ErrUnauthorized(nil))
+		}
+
+		if u.GetUserId() != id {
+			panic(common.ErrPermission("you don't have permission to update this user", nil))
+		}
+
 		storage := userstorage.NewSQLStore(db)
 
-		biz := userbusiness.NewUpdateUserBusiness(storage)
+		repo := srrepository.NewUpdateUserRepo(storage)
+		finder := srrepository.NewFindUserRepo(storage)
+
+		biz := userbusiness.NewUpdateUserBusiness(repo, finder)
 
 		if err := biz.UpdateUser(c.Request.Context(), id, data); err != nil {
 			panic(err)
 		}
-		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
 	}
 }

@@ -8,54 +8,33 @@ import (
 	"strings"
 )
 
-// CreateUserStore là INTERFACE (hợp đồng) mà tầng business yêu cầu.
-//
-// Business KHÔNG quan tâm storage là MySQL, SQLite hay bất cứ cái gì.
-// Business chỉ cần storage đó CÓ KHẢ NĂNG tạo user.
-//
-// Bất kỳ storage nào muốn được business sử dụng
-// thì BẮT BUỘC phải implement interface này.
-
-type RegisterStore interface {
-	Create(ctx context.Context, data *usermodel.UserCreate) error
-	FindDataWithCondition(
-		context context.Context,
-		condition map[string]interface{},
-		moreKeys ...string,
-	) (*usermodel.User, error)
+type RegisterRepo interface {
+	CreateUser(
+		ctx context.Context,
+		data *usermodel.UserCreate,
+	) error
 }
 
-// createUserBusiness là STRUCT đại diện cho nghiệp vụ "Tạo user".
-//
-// Struct này KHÔNG làm việc trực tiếp với database.
-// Nó chỉ giữ một reference (thông qua interface) tới storage.
-//
-// store ở đây chính là dependency của business.
-
 type registerBusiness struct {
-	store  RegisterStore
+	frepo  AciveUEmailFinder
+	crepo  RegisterRepo
 	hasher PasswordHasher
 }
 
-// NewCreateUserBusiness là HÀM KHỞI TẠO business.
-//
-// Storage đã được tạo sẵn ở bên ngoài (main / initializer)
-// và được TRUYỀN VÀO cho business (Dependency Injection).
-//
-// Business không tự tạo storage cho mình.
-func NewRegisterBusiness(store RegisterStore, hasher PasswordHasher) *registerBusiness {
-	return &registerBusiness{store: store, hasher: hasher}
+func NewRegisterBusiness(
+	frepo AciveUEmailFinder,
+	crepo RegisterRepo,
+	hasher PasswordHasher,
+) *registerBusiness {
+	return &registerBusiness{
+		frepo:  frepo,
+		crepo:  crepo,
+		hasher: hasher,
+	}
 }
-
-// CreateUser là USE CASE / LOGIC NGHIỆP VỤ tạo user.
-//
-// Hàm này sẽ được gọi từ handler (Gin / HTTP).
-// Business chỉ điều phối nghiệp vụ, không biết DB xử lý thế nào.
 
 func (biz *registerBusiness) Register(ctx context.Context, data *usermodel.UserCreate) error {
 
-	// Business gọi gián tiếp xuống storage thông qua interface.
-	// Không cần biết storage dùng SQL, GORM hay gì khác.
 	data.Name = strings.TrimSpace(data.Name)
 	if data.Name == "" {
 		return common.ErrMissingField("name")
@@ -65,9 +44,7 @@ func (biz *registerBusiness) Register(ctx context.Context, data *usermodel.UserC
 		return common.ErrInvalidField("password", "must be at least 8 characters")
 	}
 
-	hasUser, err := biz.store.FindDataWithCondition(ctx, map[string]interface{}{
-		"email": data.Email,
-	})
+	hasUser, err := biz.frepo.FindUserWithEmail(ctx, data.Email)
 	if err != nil {
 		return common.ErrorDB(err)
 	}
@@ -90,7 +67,7 @@ func (biz *registerBusiness) Register(ctx context.Context, data *usermodel.UserC
 	}
 	data.Password = string(hashedPassword)
 
-	if err := biz.store.Create(ctx, data); err != nil {
+	if err := biz.crepo.CreateUser(ctx, data); err != nil {
 		return common.ErrCannotCreateEntity(usermodel.EntityName, err)
 	}
 	return nil

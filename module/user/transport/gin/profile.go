@@ -11,7 +11,7 @@ import (
 
 func Profile(appCtx appctx.AppContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		u, ok := c.Get(common.CurrentUser)
+		u, ok := c.MustGet(common.CurrentUser).(common.Requester)
 		if !ok {
 			panic(common.ErrUnauthorized(errors.New("missing auth context")))
 		}

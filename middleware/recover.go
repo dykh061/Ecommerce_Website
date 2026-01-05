@@ -8,6 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// để xứ lí các lỗi panic xảy ra trong quá trình xử lí request mà không được đặt tên rõ ràng
+// ví dụ: truy cập vào phần tử của mảng slice bị out of index, truy cập vào trường của con trỏ nil
+// những lỗi này sẽ được hệ thống tự động panic và dừng chương trình nếu không được recover
+// middleware Recover sẽ giúp recover các lỗi panic này và trả về lỗi internal server error
+// thay vì để chương trình bị dừng đột ngột mà không báo lỗi gì cho client
 func Recover(c appctx.AppContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {

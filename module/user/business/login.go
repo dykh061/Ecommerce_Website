@@ -8,28 +8,21 @@ import (
 	"errors"
 )
 
-type LoginStorage interface {
-	FindDataWithCondition(
-		context context.Context,
-		condition map[string]interface{},
-		moreKeys ...string,
-	) (*usermodel.User, error)
-}
 type loginBusiness struct {
-	storageUser   LoginStorage
+	repoUser      AciveUEmailFinder
 	tokenProvider tokenprovider.Provider
 	hasher        PasswordHasher
 	expiry        int
 }
 
 func NewLoginBusiness(
-	storageUser LoginStorage,
+	repoUser AciveUEmailFinder,
 	tokenProvider tokenprovider.Provider,
 	hasher PasswordHasher,
 	expiry int,
 ) *loginBusiness {
 	return &loginBusiness{
-		storageUser:   storageUser,
+		repoUser:      repoUser,
 		tokenProvider: tokenProvider,
 		hasher:        hasher,
 		expiry:        expiry,
@@ -39,9 +32,7 @@ func (biz *loginBusiness) Login(
 	ctx context.Context,
 	data *usermodel.UserLogin,
 ) (*tokenprovider.Token, error) {
-	user, err := biz.storageUser.FindDataWithCondition(ctx, map[string]interface{}{
-		"email": data.Email,
-	})
+	user, err := biz.repoUser.FindUserWithEmail(ctx, data.Email)
 
 	if err != nil || user == nil {
 		return nil, errors.New("Email Or Password Invalid")
