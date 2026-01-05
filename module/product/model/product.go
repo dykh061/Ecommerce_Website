@@ -36,3 +36,14 @@ func (ProductUpdate) TableName() string { return Product{}.TableName() }
 const (
 	EntityName = "Product"
 )
+
+type ProductListItem struct {
+	common.SQLModel
+	Name      string          `json:"name"`
+	BasePrice decimal.Decimal `json:"base_price"`
+	ImageURL  *string         `json:"image_url,omitempty"`
+}
+
+func (p *ProductListItem) Mask() {
+	p.GenUID(common.DbTypeProduct)
+}

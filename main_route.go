@@ -82,6 +82,12 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 		productgin.CreateVariant(appCtx),
 	)
 
+	v1.GET("/products", productgin.ListPublicProduct(appCtx))
+	v1.GET("/seller/products",
+		middleware.RequiredAuthenHeader(appCtx),
+		productgin.ListSellerProduct(appCtx),
+	)
+
 	// -------- GALLERY --------
 	v1.POST("/products/:id/galleries",
 		middleware.RequiredAuthenHeader(appCtx),
