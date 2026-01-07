@@ -9,7 +9,6 @@ import (
 	productstorage "OpenMarket/module/product/storage"
 	sellerrepository "OpenMarket/module/seller/repository"
 	sellerstorage "OpenMarket/module/seller/storage"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,8 +25,7 @@ func CreateVariant(appCtx appctx.AppContext) gin.HandlerFunc {
 		if err := context.ShouldBind(&data); err != nil {
 			panic(common.InvalidRequestError(err))
 		}
-		pid, err := strconv.Atoi(context.Param("id"))
-		//pid, err := common.FromBase58(context.Param("id"))
+		uid, err := common.FromBase58(context.Param("id"))
 		if err != nil {
 			panic(err)
 		}
@@ -37,7 +35,7 @@ func CreateVariant(appCtx appctx.AppContext) gin.HandlerFunc {
 		productFinder := productrepository.NewFindProductRepo(storage)
 		repo := productrepository.NewCreateVariantRepo(storage)
 		biz := productbusiness.NewCreateVariantBusiness(repo, sellerFinder, productFinder)
-		if err := biz.CreateVariant(context.Request.Context(), userId, pid, &data); err != nil {
+		if err := biz.CreateVariant(context.Request.Context(), userId, int(uid.GetLoacalID()), &data); err != nil {
 			panic(common.ErrCannotCreateEntity("Variant", err))
 		}
 		context.JSON(200, common.SimpleSuccessResponse(true))

@@ -20,3 +20,17 @@ type FindProductWithIDAndSellerID interface {
 		sellerID int,
 	) (*productmodel.Product, error)
 }
+
+type GetProduct interface {
+	GetProductById(
+		ctx context.Context,
+		productId int,
+	) (*productmodel.Product, error)
+}
+
+type GetImagesRepo interface {
+	GetImages(
+		ctx context.Context,
+		productID int,
+	) ([]string, error)
+}

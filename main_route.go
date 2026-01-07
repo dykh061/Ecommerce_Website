@@ -15,86 +15,73 @@ import (
 func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 
 	// =======================
-	// PUBLIC API - v1
+	// API v1
 	// =======================
 	v1 := r.Group("/v1")
 
-	// -------- USER --------
-	v1.POST("/users", ginuser.Register(appCtx))
+	// =================================================
+	// AUTH / USER
+	// =================================================
 	v1.POST("/auth/login", ginuser.Login(appCtx))
-	v1.GET(
-		"/users/profile",
-		middleware.RequiredAuthenHeader(appCtx),
-		ginuser.Profile(appCtx),
-	)
-	v1.PUT(
+	v1.POST("/users", ginuser.Register(appCtx))
+
+	userAuth := v1.Group(
 		"/users",
 		middleware.RequiredAuthenHeader(appCtx),
-		ginuser.ChangePassword(appCtx),
 	)
-	v1.PUT(
-		"/users/:id",
-		middleware.RequiredAuthenHeader(appCtx),
-		ginuser.UpdateUser(appCtx),
-	)
-	v1.DELETE(
-		"/users/:id",
-		middleware.RequiredAuthenHeader(appCtx),
-		ginuser.DeleteUser(appCtx),
-	)
+	{
+		userAuth.GET("/profile", ginuser.Profile(appCtx))
+		userAuth.PATCH("", ginuser.UpdateUser(appCtx))
+		userAuth.PATCH("/password", ginuser.ChangePassword(appCtx))
+		userAuth.DELETE("", ginuser.DeleteUser(appCtx))
+	}
 
-	// -------- SELLER --------
-	v1.POST(
-		"/sellers",
-		middleware.RequiredAuthenHeader(appCtx),
-		ginseller.CreateSeller(appCtx),
-	)
+	// =================================================
+	// SELLER (PUBLIC)
+	// =================================================
 	v1.GET("/sellers", ginseller.ListSeller(appCtx))
-	v1.GET(
-		"/sellers/:id",
-		ginseller.GetSeller(appCtx),
-	)
-	v1.PUT(
+	v1.GET("/sellers/:id", ginseller.GetSeller(appCtx))
+
+	// =================================================
+	// SELLER (AUTH)
+	// =================================================
+	sellerAuth := v1.Group(
 		"/sellers",
 		middleware.RequiredAuthenHeader(appCtx),
-		ginseller.UpdateSeller(appCtx),
 	)
-	v1.DELETE(
-		"/sellers",
-		middleware.RequiredAuthenHeader(appCtx),
-		ginseller.DeleteSeller(appCtx),
-	)
-	v1.GET(
-		"/sellers/my-shop",
-		middleware.RequiredAuthenHeader(appCtx),
-		ginseller.GetMyShop(appCtx),
-	)
+	{
+		sellerAuth.POST("", ginseller.CreateSeller(appCtx))
+		sellerAuth.GET("/me", ginseller.GetMyShop(appCtx))
+		sellerAuth.PATCH("", ginseller.UpdateSeller(appCtx))
+		sellerAuth.DELETE("", ginseller.DeleteSeller(appCtx))
+	}
 
-	// -------- PRODUCT --------
-
-	v1.POST("/products",
-		middleware.RequiredAuthenHeader(appCtx),
-		productgin.CreateProduct(appCtx),
-	)
-
-	v1.POST("/products/:id/variant",
-		middleware.RequiredAuthenHeader(appCtx),
-		productgin.CreateVariant(appCtx),
-	)
-
+	// =================================================
+	// PRODUCT (PUBLIC)
+	// =================================================
 	v1.GET("/products", productgin.ListPublicProduct(appCtx))
-	v1.GET("/seller/products",
-		middleware.RequiredAuthenHeader(appCtx),
-		productgin.ListSellerProduct(appCtx),
-	)
+	v1.GET("/products/:id", productgin.GetProductDetail(appCtx))
+	v1.GET("/products/:id/variants", productgin.ListVariant(appCtx))
+	v1.GET("/products/:id/galleries", productgin.GetImages(appCtx))
 
-	// -------- GALLERY --------
-	v1.POST("/products/:id/galleries",
+	// =================================================
+	// PRODUCT (SELLER)
+	// =================================================
+	sellerProduct := v1.Group(
+		"/seller/products",
 		middleware.RequiredAuthenHeader(appCtx),
-		productgin.CreateProductGallery(appCtx),
 	)
+	{
+		sellerProduct.GET("", productgin.ListSellerProduct(appCtx))
+		sellerProduct.POST("", productgin.CreateProduct(appCtx))
+		sellerProduct.PATCH("/:id", productgin.UpdateProduct(appCtx))
+		sellerProduct.POST("/:id/variants", productgin.CreateVariant(appCtx))
+		sellerProduct.POST("/:id/galleries", productgin.CreateProductGallery(appCtx))
+	}
 
-	// -------- UPLOAD --------
+	// =================================================
+	// UPLOAD
+	// =================================================
 	v1.POST(
 		"/upload",
 		middleware.RequiredAuthenHeader(appCtx),

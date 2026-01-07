@@ -27,7 +27,7 @@ func CreateProductGallery(appCtx appctx.AppContext) func(c *gin.Context) {
 		userID := u.GetUserId()
 
 		// 1. Lấy productId từ URL
-		productId, err := strconv.Atoi(c.Param("id"))
+		uid, err := common.FromBase58(c.Param("id"))
 		if err != nil {
 			panic(err)
 		}
@@ -62,7 +62,7 @@ func CreateProductGallery(appCtx appctx.AppContext) func(c *gin.Context) {
 		// 4. Gọi business
 		if err := createGalleryBiz.CreateProductGallery(
 			c.Request.Context(),
-			productId,
+			int(uid.GetLoacalID()),
 			userID,
 			dataBytes,
 			fileHeader.Filename,
