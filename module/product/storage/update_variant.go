@@ -3,17 +3,22 @@ package productstorage
 import (
 	productmodel "OpenMarket/module/product/model"
 	"context"
+
+	"github.com/shopspring/decimal"
 )
 
 func (s *sqlStore) UpdateVariant(
 	ctx context.Context,
 	condition map[string]interface{},
-	data *productmodel.VariantUpdate,
+	upprice *decimal.Decimal,
 ) error {
+
 	db := s.db.WithContext(ctx).
 		Model(&productmodel.Variant{}).
 		Where(condition).
-		Updates(data)
+		Updates(map[string]interface{}{
+			"price": upprice,
+		})
 	if db.Error != nil {
 		return db.Error
 	}

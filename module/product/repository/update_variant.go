@@ -2,29 +2,42 @@ package productrepository
 
 import (
 	productmodel "OpenMarket/module/product/model"
+	productstorage "OpenMarket/module/product/storage"
 	"context"
 )
 
-type UpdateVariantStorage interface {
-	UpdateVariant(
+type TransactionProvider interface {
+	WithTransaction(
 		ctx context.Context,
-		condition map[string]interface{},
-		data *productmodel.VariantUpdate,
+		fn func(tx productstorage.TxStore) error,
 	) error
 }
 
 type updateVariantRepo struct {
-	storage UpdateVariantStorage
+	txProvider TransactionProvider
 }
 
-func NewUpdateVariantRepo(storage UpdateVariantStorage) *updateVariantRepo {
-	return &updateVariantRepo{storage: storage}
+func NewUpdateVariantRepo(tp TransactionProvider) *updateVariantRepo {
+	return &updateVariantRepo{txProvider: tp}
 }
 
 func (repo *updateVariantRepo) UpdateVariant(
 	ctx context.Context,
+	variantId int,
 	condition map[string]interface{},
 	data *productmodel.VariantUpdate,
 ) error {
-	return repo.storage.UpdateVariant(ctx, condition, data)
+	return repo.txProvider.WithTransaction(ctx, func(tx productstorage.TxStore) error {
+		if data.Price != nil {
+			if err := tx.UpdateVariant(ctx, condition, data.Price); err != nil {
+				return err
+			}
+		}
+		if data.StockQuantity != nil {
+			if err := tx.AdjustVariantStock(ctx, variantId, *data.StockQuantity); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

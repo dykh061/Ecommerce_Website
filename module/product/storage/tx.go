@@ -3,6 +3,8 @@ package productstorage
 import (
 	productmodel "OpenMarket/module/product/model"
 	"context"
+
+	"github.com/shopspring/decimal"
 )
 
 // TxStore là interface transaction-level
@@ -24,4 +26,9 @@ type TxStore interface {
 		productId int,
 		attributeValueIds []int,
 	) (*productmodel.Variant, error)
+	UpdateVariant(
+		ctx context.Context,
+		condition map[string]interface{},
+		upprice *decimal.Decimal,
+	) error
 }

@@ -63,6 +63,7 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 	v1.GET("/products/:id", productgin.GetProductDetail(appCtx))
 	v1.GET("/products/:id/variants", productgin.ListVariant(appCtx))
 	v1.GET("/products/:id/galleries", productgin.GetImages(appCtx))
+	v1.POST("/products/variants", productgin.AdjustStock(appCtx))
 
 	// =================================================
 	// PRODUCT (SELLER)
@@ -76,6 +77,7 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 		sellerProduct.POST("", productgin.CreateProduct(appCtx))
 		sellerProduct.PATCH("/:id", productgin.UpdateProduct(appCtx))
 		sellerProduct.POST("/:id/variants", productgin.CreateVariant(appCtx))
+		sellerProduct.PATCH("/:id/variant/:vid", productgin.UpdateVariant(appCtx))
 		sellerProduct.POST("/:id/galleries", productgin.CreateProductGallery(appCtx))
 	}
 
