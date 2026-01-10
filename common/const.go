@@ -9,6 +9,7 @@ const (
 	DbTypeSeller  = 2
 	DbTypeVariant = 3
 	DbTypeProduct = 4
+	DbTypeAddress = 5
 )
 
 type Requester interface {

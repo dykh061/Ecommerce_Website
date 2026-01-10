@@ -45,6 +45,35 @@ type UserLogin struct {
 	Password string `json:"password" form:"password" gorm:"column:password;"`
 }
 
+type UserAddress struct {
+	common.SQLModel `json:",inline"`
+	UserId          int    `json:"-" gorm:"column:user_id;index;not null"`
+	Address         string `json:"address" gorm:"type:varchar(255);not null"`
+	City            string `json:"city" gorm:"type:varchar(100);not null"`
+}
+
+func (UserAddress) TableName() string { return "user_addresses" }
+
+type UserAddressCreate struct {
+	UserId  int    `json:"-" gorm:"column:user_id;index;not null"`
+	Address string `json:"address" gorm:"type:varchar(255);not null"`
+	City    string `json:"city" gorm:"type:varchar(100);not null"`
+}
+
+func (UserAddressCreate) TableName() string { return UserAddress{}.TableName() }
+
+type UserAddressUpdate struct {
+	Address *string `json:"address" gorm:"type:varchar(255);not null"`
+	Status  int     `json:"status" gorm:"column:status;default:0;index"`
+	City    *string `json:"city" gorm:"type:varchar(100);not null"`
+}
+
+func (u *UserAddress) Mask() {
+	u.GenUID(common.DbTypeAddress)
+}
+
+func (UserAddressUpdate) TableName() string { return UserAddress{}.TableName() }
+
 func (UserLogin) TableName() string { return User{}.TableName() }
 
 func (u *User) GetUserId() int {

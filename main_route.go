@@ -38,6 +38,21 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 	}
 
 	// =================================================
+	// ADDRESS (AUTH)
+	// =================================================
+	address := v1.Group(
+		"/address",
+		middleware.RequiredAuthenHeader(appCtx),
+	)
+	{
+
+		address.PATCH("/:id", ginuser.UpdateAddress(appCtx))
+		address.DELETE("/:id", ginuser.DeleteAddress(appCtx))
+		address.GET("", ginuser.GetListAddress(appCtx))
+		address.POST("", ginuser.CreateAddress(appCtx))
+	}
+
+	// =================================================
 	// SELLER (PUBLIC)
 	// =================================================
 	v1.GET("/sellers", ginseller.ListSeller(appCtx))
