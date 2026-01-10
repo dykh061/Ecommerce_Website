@@ -3,6 +3,7 @@ package main
 import (
 	"OpenMarket/component/appctx"
 	"OpenMarket/middleware"
+	cartgin "OpenMarket/module/cart/transport/gin"
 	productgin "OpenMarket/module/product/transport/gin"
 
 	ginseller "OpenMarket/module/seller/transport/gin"
@@ -76,9 +77,27 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 		sellerProduct.GET("", productgin.ListSellerProduct(appCtx))
 		sellerProduct.POST("", productgin.CreateProduct(appCtx))
 		sellerProduct.PATCH("/:id", productgin.UpdateProduct(appCtx))
+		sellerProduct.DELETE("/:id", productgin.DeleteProduct(appCtx))
 		sellerProduct.POST("/:id/variants", productgin.CreateVariant(appCtx))
 		sellerProduct.PATCH("/:id/variant/:vid", productgin.UpdateVariant(appCtx))
+		sellerProduct.DELETE("/:id/variant/:vid", productgin.DeleteVariant(appCtx))
 		sellerProduct.POST("/:id/galleries", productgin.CreateProductGallery(appCtx))
+	}
+
+	// =================================================
+	// CART (AUTH)
+	// =================================================
+	cart := v1.Group(
+		"/carts",
+		middleware.RequiredAuthenHeader(appCtx),
+	)
+	{
+		cart.POST("/items", cartgin.AddToCart(appCtx))
+		cart.PATCH("/items", cartgin.AdJustProduct(appCtx))
+		cart.DELETE("/items", cartgin.RemoveItemFromCart(appCtx))
+		cart.POST("", cartgin.CreateCart(appCtx)) // dùng test tạm thôi chứ không cần thiết
+		cart.GET("", cartgin.GetListItem(appCtx))
+
 	}
 
 	// =================================================
