@@ -10,3 +10,8 @@ type Filter struct {
 	MaxPrice   *decimal.Decimal `json:"max_price" form:"max_price"`
 	Search     *string          `json:"search" form:"search"`
 }
+
+type FilterCategory struct {
+	Search   *string `json:"search" form:"search"`
+	ParentID *int    `json:"parent_id" form:"parent_id" gorm:"parent_id"`
+}
