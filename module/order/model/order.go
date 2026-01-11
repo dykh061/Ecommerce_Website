@@ -50,8 +50,22 @@ type OrderCancel struct {
 func (OrderCancel) TableName() string { return Order{}.TableName() }
 
 type FilterOrder struct {
-	UserId   *int             `json:"-" gorm:"column:user_id"`
+	UserId   int              `json:"-" form:"-"`
 	MinPrice *decimal.Decimal `json:"min_price" form:"min_price"`
 	MaxPrice *decimal.Decimal `json:"max_price" form:"max_price"`
 	Status   *string          `json:"status" gorm:"column:status"`
+}
+
+type OrderDetail struct {
+	Id          int              `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
+	TotalAmount decimal.Decimal  `json:"total_amount" gorm:"column:total_amount"`
+	Status      string           `json:"status" gorm:"column:status"`
+	CreatedAt   *time.Time       `json:"created_at,omitempty" gorm:"column:created_at;"`
+	UpdatedAt   *time.Time       `json:"updated_at,omitempty" gorm:"column:updated_at;"`
+	Items       []OrderWithItems `json:"items" gorm:"-"`
+}
+type OrderWithItems struct {
+	VariantId int             `json:"variant_id" gorm:"column:variant_id;not null"`
+	Quantity  int             `json:"quantity" gorm:"column:quantity;not null"`
+	Price     decimal.Decimal `json:"price" gorm:"column:price;type:decimal(12,2);not null"`
 }

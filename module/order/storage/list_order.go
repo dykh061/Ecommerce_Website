@@ -13,10 +13,9 @@ func (s *sqlStore) ListOrders(
 ) ([]ordermodel.Order, error) {
 	var result []ordermodel.Order
 	db := s.db.Table(ordermodel.Order{}.TableName())
+
 	if f := filter; f != nil {
-		if f.UserId != nil {
-			db = db.Where("user_id = ?", *f.UserId)
-		}
+		db = db.Where("user_id = ?", filter.UserId)
 		if f.Status != nil {
 			db = db.Where("LOWER(status) LIKE LOWER(?)", *f.Status)
 		}

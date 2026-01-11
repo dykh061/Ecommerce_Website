@@ -124,7 +124,10 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 		middleware.RequiredAuthenHeader(appCtx),
 	)
 	{
+		order.GET("/:order_id", ordergin.GetDetailOrder(appCtx))
+		order.GET("", ordergin.GetListOrder(appCtx))
 		order.POST("", ordergin.CreateOrder(appCtx))
+
 	}
 
 	// =================================================
