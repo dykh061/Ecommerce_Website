@@ -10,11 +10,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type CreateOrderItem struct {
-	VariantID int
-	Quantity  int
-}
-
 type createOrderBusiness struct {
 	txRepo orderrepository.TransactionRepo
 }
@@ -26,69 +21,98 @@ func NewCreateOrderBusiness(txRepo orderrepository.TransactionRepo) *createOrder
 func (biz *createOrderBusiness) CreateOrder(
 	ctx context.Context,
 	userID int,
-	items []CreateOrderItem,
+	addressID int,
 ) error {
-	if len(items) == 0 {
-		return common.InvalidRequestError(errors.New("order items is empty"))
-	}
+
 	return biz.txRepo.WithTransaction(ctx, func(tx orderrepository.TxStore) error {
 
-		total := decimal.Zero
+		// 1️⃣ Find cart
+		cart, err := tx.FindCart(ctx, userID)
+		if err != nil {
+			return err
+		}
 
-		//  Tạo order trước (total tạm = 0)
+		// 2️⃣ List cart items
+		items, err := tx.ListCartItems(ctx, cart.Id)
+		if err != nil {
+			return err
+		}
+
+		if len(items) == 0 {
+			return common.InvalidRequestError(errors.New("cart is empty"))
+		}
+
+		// 3️⃣ Validate address
+		address, err := tx.FindAddressById(ctx, addressID, userID)
+		if err != nil {
+			return err
+		}
+
+		user, err := tx.FindDataWithCondition(ctx, map[string]interface{}{
+			"id": userID,
+		})
+		if err != nil {
+			return err
+		}
+
+		// 4️⃣ Create order
 		order := &ordermodel.Order{
 			UserId:      userID,
 			TotalAmount: decimal.Zero,
 			Status:      ordermodel.OrderPending,
 		}
-
 		if err := tx.CreateOrder(ctx, order); err != nil {
 			return err
 		}
 
-		//  Với mỗi item → lấy variant + tính tiền + tạo order_item
-		for _, item := range items {
+		// 5️⃣ Snapshot address
+		if err := tx.CreateAddress(ctx, &ordermodel.OrderAddressCreate{
+			OrderId:  order.Id,
+			Address:  address.Address,
+			City:     address.City,
+			Phone:    user.Phone,
+			FullName: user.Name,
+		}); err != nil {
+			return err
+		}
 
-			if item.Quantity <= 0 {
+		total := decimal.Zero
+
+		// 6️⃣ Create order_items từ cart_items
+		for _, ci := range items {
+
+			if ci.Quantity <= 0 {
 				return common.InvalidRequestError(errors.New("invalid quantity"))
 			}
 
-			variant, err := tx.FindVariantByID(
-				ctx,
-				item.VariantID,
-			)
+			variant, err := tx.FindVariantByID(ctx, ci.VariantId)
 			if err != nil {
 				return err
 			}
 
-			price := variant.Price
-			subTotal := price.Mul(decimal.NewFromInt(int64(item.Quantity)))
-			total = total.Add(subTotal)
+			sub := variant.Price.Mul(decimal.NewFromInt(int64(ci.Quantity)))
+			total = total.Add(sub)
 
-			//  Tạo order_item (price = DB price)
 			if err := tx.CreateOrderItem(ctx, &ordermodel.OrderItemCreate{
 				OrderId:   order.Id,
-				VariantId: variant.Id,
-				Quantity:  item.Quantity,
-				Price:     price,
+				VariantId: ci.VariantId,
+				Quantity:  ci.Quantity,
+				Price:     variant.Price,
 			}); err != nil {
 				return err
 			}
 
-			if err := tx.AdjustVariantStock(
-				ctx,
-				variant.Id,
-				-item.Quantity,
-			); err != nil {
+			if err := tx.AdjustVariantStock(ctx, ci.VariantId, -ci.Quantity); err != nil {
 				return err
 			}
 		}
 
-		//  Update lại total_amount cho order
+		// 7️⃣ Update total
 		if err := tx.UpTotalAmount(ctx, total, order.Id); err != nil {
 			return err
 		}
 
-		return nil
+		// 8️⃣ Clear cart
+		return tx.DeleteCart(ctx, userID)
 	})
 }

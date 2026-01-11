@@ -4,6 +4,7 @@ import (
 	cartstorage "OpenMarket/module/cart/storage"
 	orderrepository "OpenMarket/module/order/repository"
 	productstorage "OpenMarket/module/product/storage"
+	userstorage "OpenMarket/module/user/storage"
 	"context"
 )
 
@@ -19,6 +20,7 @@ func (s *sqlStore) WithTransaction(
 	orderStore := &sqlStore{db: tx}
 	productStore := productstorage.NewSQLStore(tx)
 	cartStore := cartstorage.NewSQLStore(tx)
+	userStore := userstorage.NewSQLStore(tx)
 
 	txStore := &txStore{
 		db:            tx,
@@ -26,6 +28,7 @@ func (s *sqlStore) WithTransaction(
 		stockStore:    productStore, // implements AdjustStockStorage
 		variantReader: productStore, // implements VariantReader
 		cartStore:     cartStore,
+		userStore:     userStore,
 	}
 
 	if err := fn(txStore); err != nil {

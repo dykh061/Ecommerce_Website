@@ -1,8 +1,10 @@
 package orderrepository
 
 import (
+	cartmodel "OpenMarket/module/cart/model"
 	ordermodel "OpenMarket/module/order/model"
 	productmodel "OpenMarket/module/product/model"
+	usermodel "OpenMarket/module/user/model"
 	"context"
 
 	"github.com/shopspring/decimal"
@@ -42,6 +44,27 @@ type TxStore interface {
 		totalAmount decimal.Decimal,
 		id int,
 	) error
+	FindDataWithCondition(
+		context context.Context,
+		condition map[string]interface{},
+		moreKeys ...string,
+	) (*usermodel.User, error)
+	FindAddressById(
+		ctx context.Context,
+		id, userId int,
+	) (*usermodel.UserAddress, error)
+	CreateAddress(
+		ctx context.Context,
+		data *ordermodel.OrderAddressCreate,
+	) error
+	FindCart(
+		ctx context.Context,
+		userId int,
+	) (*cartmodel.Cart, error)
+	ListCartItems(
+		ctx context.Context,
+		cartId int,
+	) ([]cartmodel.CartItem, error)
 }
 
 type TransactionRepo interface {

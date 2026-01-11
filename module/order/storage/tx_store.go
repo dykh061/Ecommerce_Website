@@ -1,10 +1,13 @@
 package orderstorage
 
 import (
+	cartmodel "OpenMarket/module/cart/model"
 	cartrepository "OpenMarket/module/cart/repository"
 	ordermodel "OpenMarket/module/order/model"
 	productmodel "OpenMarket/module/product/model"
 	productrepository "OpenMarket/module/product/repository"
+	usermodel "OpenMarket/module/user/model"
+	srrepository "OpenMarket/module/user/repository"
 
 	"context"
 
@@ -15,6 +18,7 @@ import (
 type txStore struct {
 	db            *gorm.DB
 	orderStore    *sqlStore
+	userStore     srrepository.UserStore
 	stockStore    productrepository.AdjustStockStorage
 	variantReader productrepository.VariantReader
 	cartStore     cartrepository.CartCleaner
@@ -73,4 +77,37 @@ func (t *txStore) UpTotalAmount(
 	id int,
 ) error {
 	return t.orderStore.UpTotalAmount(ctx, totalAmount, id)
+}
+
+func (t *txStore) FindDataWithCondition(
+	context context.Context,
+	condition map[string]interface{},
+	moreKeys ...string,
+) (*usermodel.User, error) {
+	return t.userStore.FindDataWithCondition(context, condition, moreKeys...)
+}
+
+func (t *txStore) FindAddressById(
+	ctx context.Context,
+	id, userId int,
+) (*usermodel.UserAddress, error) {
+	return t.userStore.FindAddressById(ctx, id, userId)
+}
+
+func (t *txStore) CreateAddress(
+	ctx context.Context,
+	data *ordermodel.OrderAddressCreate,
+) error {
+	return t.orderStore.CreateAddress(ctx, data)
+}
+
+func (t *txStore) FindCart(ctx context.Context, userId int) (*cartmodel.Cart, error) {
+	return t.cartStore.FindCart(ctx, userId)
+}
+
+func (t *txStore) ListCartItems(
+	ctx context.Context,
+	cartId int,
+) ([]cartmodel.CartItem, error) {
+	return t.cartStore.ListCartItems(ctx, cartId)
 }
