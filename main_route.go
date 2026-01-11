@@ -4,6 +4,7 @@ import (
 	"OpenMarket/component/appctx"
 	"OpenMarket/middleware"
 	cartgin "OpenMarket/module/cart/transport/gin"
+	ordergin "OpenMarket/module/order/transport/gin"
 	productgin "OpenMarket/module/product/transport/gin"
 
 	ginseller "OpenMarket/module/seller/transport/gin"
@@ -113,6 +114,17 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 		cart.POST("", cartgin.CreateCart(appCtx)) // dùng test tạm thôi chứ không cần thiết
 		cart.GET("", cartgin.GetListItem(appCtx))
 
+	}
+
+	// ==================================================
+	// ORDER (AUTH)
+	// =================================================
+	order := v1.Group(
+		"/orders",
+		middleware.RequiredAuthenHeader(appCtx),
+	)
+	{
+		order.POST("", ordergin.CreateOrder(appCtx))
 	}
 
 	// =================================================
