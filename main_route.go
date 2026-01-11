@@ -127,6 +127,7 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 		order.GET("/:order_id", ordergin.GetDetailOrder(appCtx))
 		order.GET("", ordergin.GetListOrder(appCtx))
 		order.POST("", ordergin.CreateOrder(appCtx))
+		order.PATCH("", ordergin.CanCelOrder(appCtx))
 
 	}
 
