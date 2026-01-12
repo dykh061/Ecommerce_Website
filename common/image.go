@@ -22,7 +22,7 @@ func (Image) TableName() string { return "images" }
 func (i *Image) Scan(value interface{}) error {
 	bytes, ok := value.([]byte)
 	if !ok {
-		return errors.New(fmt.Sprintf("failed To unmarshal JSONB value: ", value))
+		return errors.New(fmt.Sprintf("failed To unmarshal JSONB value: %v", value))
 	}
 	var img Image
 

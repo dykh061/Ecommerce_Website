@@ -11,7 +11,7 @@ type CreateProductRepo interface {
 	CreateProduct(
 		ctx context.Context,
 		data *productmodel.ProductCreate,
-	) error
+	) (*productmodel.ProductCreate, error)
 }
 
 type FindSellerRepo interface {
@@ -40,18 +40,19 @@ func (biz *createProductBusiness) CreateProduct(
 	ctx context.Context,
 	userID int,
 	data *productmodel.ProductCreate,
-) error {
+) (*productmodel.ProductCreate, error) {
 
 	seller, err := biz.sellerRepo.FindActiveSellerWithUserID(ctx, userID)
 	if err != nil || seller == nil {
-		return common.ErrEntityNotFound("Shop", err)
+		return nil, common.ErrEntityNotFound("Shop", err)
 	}
 
 	data.SellerID = seller.Id
 
-	if err := biz.productRepo.CreateProduct(ctx, data); err != nil {
-		return common.ErrCannotCreateEntity("Product", err)
+	product, err := biz.productRepo.CreateProduct(ctx, data)
+	if err != nil {
+		return nil, common.ErrCannotCreateEntity("Product", err)
 	}
 
-	return nil
+	return product, nil
 }

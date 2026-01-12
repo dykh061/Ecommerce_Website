@@ -18,7 +18,7 @@ func (s *sqlStore) ListProduct(
 		Table(productmodel.Product{}.TableName() + " p").
 		Select(`p.id,p.name,p.base_price,g.image_url`).
 		Joins(`left join galleries g 
-				on p.id = g.product_id and g.is_main  = true`)
+				on p.id = g.product_id and g.is_main  = 1`)
 
 	if f := filter; f != nil {
 		if f.Status != nil {

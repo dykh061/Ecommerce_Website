@@ -65,7 +65,10 @@ type OrderDetail struct {
 	Items       []OrderWithItems `json:"items" gorm:"-"`
 }
 type OrderWithItems struct {
-	VariantId int             `json:"variant_id" gorm:"column:variant_id;not null"`
-	Quantity  int             `json:"quantity" gorm:"column:quantity;not null"`
-	Price     decimal.Decimal `json:"price" gorm:"column:price;type:decimal(12,2);not null"`
+	VariantId  int               `json:"variant_id" gorm:"column:variant_id;not null"`
+	Quantity   int               `json:"quantity" gorm:"column:quantity;not null"`
+	Price      decimal.Decimal   `json:"price" gorm:"column:price;type:decimal(12,2);not null"`
+	Name       string            `json:"name" gorm:"-"`
+	Image      *string           `json:"image,omitempty" gorm:"-"`
+	Attributes map[string]string `json:"attributes" gorm:"-"`
 }

@@ -10,7 +10,7 @@ type CreateGalleryRepo interface {
 	CreateProductGallery(
 		ctx context.Context,
 		data *productmodel.GalleryCreate,
-	) error
+	) (*productmodel.GalleryCreate, error)
 }
 
 type createGalleryBiz struct {
@@ -41,28 +41,29 @@ func (biz *createGalleryBiz) CreateProductGallery(
 	fileBytes []byte,
 	filename string,
 	isMain bool,
-) error {
+) (*productmodel.GalleryCreate, error) {
 
 	seller, err := biz.sfinder.FindActiveSellerWithUserID(ctx, userId)
 	if err != nil {
-		return common.InvalidRequestError(err)
+		return nil, common.InvalidRequestError(err)
 	}
 	_, err = biz.pfinder.FindProductByIdWithSellerID(ctx, productId, seller.Id)
 	if err != nil {
-		return common.InvalidRequestError(err)
+		return nil, common.InvalidRequestError(err)
 	}
 
 	img, err := biz.uploader.UploadFile(ctx, fileBytes, "product", filename)
 	if err != nil {
-		return common.InvalidRequestError(err)
+		return nil, common.InvalidRequestError(err)
 	}
 	imgDb := &productmodel.GalleryCreate{
 		ProductId: productId,
 		ImageURL:  img.Url,
 		IsMain:    isMain,
 	}
-	if err := biz.repo.CreateProductGallery(ctx, imgDb); err != nil {
-		return common.InvalidRequestError(err)
+	gallery, err := biz.repo.CreateProductGallery(ctx, imgDb)
+	if err != nil {
+		return nil, common.InvalidRequestError(err)
 	}
-	return nil
+	return gallery, nil
 }

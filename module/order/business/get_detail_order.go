@@ -10,7 +10,7 @@ type GetDetailOrderStore interface {
 	ListOrderItemsByOrderID(
 		ctx context.Context,
 		orderID int,
-	) ([]ordermodel.OrderItem, error)
+	) ([]ordermodel.OrderItemDetailRow, error)
 	FindOrderByID(
 		ctx context.Context,
 		id int,
@@ -45,13 +45,32 @@ func (biz *getDetailOrderBusiness) GetDetailOrder(
 		CreatedAt:   order.CreatedAt,
 		UpdatedAt:   order.UpdatedAt,
 	}
-	for _, it := range items {
-		orderItem := ordermodel.OrderWithItems{
-			VariantId: it.VariantId,
-			Quantity:  it.Quantity,
-			Price:     it.Price,
+	itemByID := make(map[int]*ordermodel.OrderWithItems)
+	itemOrder := make([]int, 0)
+	for _, row := range items {
+		it, ok := itemByID[row.OrderItemID]
+		if !ok {
+			name := ""
+			if row.ProductName != nil {
+				name = *row.ProductName
+			}
+			it = &ordermodel.OrderWithItems{
+				VariantId:  row.VariantId,
+				Quantity:   row.Quantity,
+				Price:      row.Price,
+				Name:       name,
+				Image:      row.ImageURL,
+				Attributes: map[string]string{},
+			}
+			itemByID[row.OrderItemID] = it
+			itemOrder = append(itemOrder, row.OrderItemID)
 		}
-		orderDetail.Items = append(orderDetail.Items, orderItem)
+		if row.AttributeName != nil && row.AttributeValue != nil {
+			it.Attributes[*row.AttributeName] = *row.AttributeValue
+		}
+	}
+	for _, id := range itemOrder {
+		orderDetail.Items = append(orderDetail.Items, *itemByID[id])
 	}
 	return &orderDetail, nil
 }

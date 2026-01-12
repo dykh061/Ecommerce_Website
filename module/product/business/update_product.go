@@ -9,6 +9,7 @@ import (
 type UpdateProductRepo interface {
 	UpdateProduct(
 		ctx context.Context,
+		productID int,
 		condition map[string]interface{},
 		data *productmodel.ProductUpdate,
 	) error
@@ -44,7 +45,7 @@ func (biz *updateProductBusiness) UpdateProduct(
 	if _, err := biz.pfinder.FindProductByIdWithSellerID(ctx, productId, seller.Id); err != nil {
 		return common.ErrCannotUpdateEntity(productmodel.EntityName, err)
 	}
-	if err := biz.repo.UpdateProduct(ctx, map[string]interface{}{
+	if err := biz.repo.UpdateProduct(ctx, productId, map[string]interface{}{
 		"id":     productId,
 		"status": common.SystemStatusActive,
 	}, data); err != nil {

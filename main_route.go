@@ -3,6 +3,7 @@ package main
 import (
 	"OpenMarket/component/appctx"
 	"OpenMarket/middleware"
+	admingin "OpenMarket/module/admin/transport/gin"
 	cartgin "OpenMarket/module/cart/transport/gin"
 	ordergin "OpenMarket/module/order/transport/gin"
 	productgin "OpenMarket/module/product/transport/gin"
@@ -74,12 +75,19 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 	}
 
 	// =================================================
+	// CATEGORY (PUBLIC)
+	// =================================================
+	v1.GET("/categories", productgin.ListCategories(appCtx))
+	v1.GET("/categories/:category_id/attributes", productgin.GetCategoryAttributes(appCtx))
+
+	// =================================================
 	// PRODUCT (PUBLIC)
 	// =================================================
 	v1.GET("/products", productgin.ListPublicProduct(appCtx))
 	v1.GET("/products/:id", productgin.GetProductDetail(appCtx))
 	v1.GET("/products/:id/variants", productgin.ListVariant(appCtx))
 	v1.GET("/products/:id/galleries", productgin.GetImages(appCtx))
+	v1.GET("/products/:id/attributes", productgin.GetProductAttributes(appCtx))
 	v1.POST("/products/variants", productgin.AdjustStock(appCtx))
 
 	// =================================================
@@ -91,13 +99,23 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 	)
 	{
 		sellerProduct.GET("", productgin.ListSellerProduct(appCtx))
+		sellerProduct.GET("/:id", productgin.GetSellerProductDetail(appCtx))
 		sellerProduct.POST("", productgin.CreateProduct(appCtx))
 		sellerProduct.PATCH("/:id", productgin.UpdateProduct(appCtx))
 		sellerProduct.DELETE("/:id", productgin.DeleteProduct(appCtx))
+
+		// Variant routes
+		sellerProduct.GET("/:id/variant/:vid", productgin.GetSellerVariantDetail(appCtx))
 		sellerProduct.POST("/:id/variants", productgin.CreateVariant(appCtx))
+		sellerProduct.POST("/:id/variants/check-duplicate", productgin.CheckVariantDuplicate(appCtx))
 		sellerProduct.PATCH("/:id/variant/:vid", productgin.UpdateVariant(appCtx))
+		sellerProduct.PATCH("/:id/variant/:vid/status", productgin.ToggleVariantStatus(appCtx))
 		sellerProduct.DELETE("/:id/variant/:vid", productgin.DeleteVariant(appCtx))
+
+		// Gallery routes
 		sellerProduct.POST("/:id/galleries", productgin.CreateProductGallery(appCtx))
+		sellerProduct.PATCH("/:id/galleries/:gallery_id/main", productgin.SetMainGallery(appCtx))
+		sellerProduct.DELETE("/:id/galleries/:gallery_id", productgin.DeleteGallery(appCtx))
 	}
 
 	// =================================================
@@ -113,6 +131,7 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 		cart.DELETE("/items", cartgin.RemoveItemFromCart(appCtx))
 		cart.POST("", cartgin.CreateCart(appCtx)) // dùng test tạm thôi chứ không cần thiết
 		cart.GET("", cartgin.GetListItem(appCtx))
+		cart.GET("/items/detail", cartgin.GetListItemDetail(appCtx))
 
 	}
 
@@ -139,4 +158,34 @@ func setupRoutes(appCtx appctx.AppContext, r *gin.Engine) {
 		middleware.RequiredAuthenHeader(appCtx),
 		uploadgin.UpLoadImage(appCtx),
 	)
+
+	// =================================================
+	// ADMIN (Staff/Admin Panel)
+	// =================================================
+
+	// Admin Auth (Public - no token required)
+	v1.POST("/admin/auth/login", admingin.Login(appCtx))
+
+	// DEV-ONLY seed endpoints (guarded by env + non-release mode)
+	v1.POST("/dev/seed/create-staff", admingin.DevSeedCreateStaff(appCtx))
+
+	// Admin routes (requires admin authentication)
+	admin := v1.Group(
+		"/admin",
+		middleware.RequireAdminAuth(appCtx),
+	)
+	{
+		// Staff profile
+		admin.GET("/profile", admingin.Profile())
+
+		// Seller management (requires moderator or admin role)
+		adminSellers := admin.Group("/sellers", middleware.RequireModerator())
+		{
+			adminSellers.GET("", admingin.ListSellers(appCtx))
+			adminSellers.GET("/:id", admingin.GetSeller(appCtx))
+			adminSellers.PATCH("/:id/status", admingin.UpdateSellerStatus(appCtx))
+			adminSellers.POST("/:id/lock", admingin.LockSeller(appCtx))
+			adminSellers.POST("/:id/unlock", admingin.UnlockSeller(appCtx))
+		}
+	}
 }

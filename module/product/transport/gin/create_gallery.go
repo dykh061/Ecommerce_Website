@@ -60,18 +60,19 @@ func CreateProductGallery(appCtx appctx.AppContext) func(c *gin.Context) {
 		pfinder := productrepository.NewFindProductRepo(storage)
 		createGalleryBiz := productbusiness.NewCreateGalleryBiz(uploadBiz, galleryRepo, sfinder, pfinder)
 		// 4. Gọi business
-		if err := createGalleryBiz.CreateProductGallery(
+		gallery, err := createGalleryBiz.CreateProductGallery(
 			c.Request.Context(),
 			int(uid.GetLoacalID()),
 			userID,
 			dataBytes,
 			fileHeader.Filename,
 			isMain,
-		); err != nil {
+		)
+		if err != nil {
 			panic(err)
 		}
 
 		// 5. Trả kết quả
-		c.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(gallery))
 	}
 }

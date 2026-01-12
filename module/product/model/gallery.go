@@ -13,6 +13,7 @@ type Gallery struct {
 func (Gallery) TableName() string { return "galleries" }
 
 type GalleryCreate struct {
+	Id        int    `json:"id" gorm:"column:id;"`
 	ProductId int    `json:"-" gorm:"not null;index"`
 	ImageURL  string `json:"image_url" gorm:"column:image_url;type:varchar(500);not null"`
 	IsMain    bool   `json:"is_main" gorm:"not null;default:false"`

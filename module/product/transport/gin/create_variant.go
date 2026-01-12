@@ -35,9 +35,10 @@ func CreateVariant(appCtx appctx.AppContext) gin.HandlerFunc {
 		productFinder := productrepository.NewFindProductRepo(storage)
 		repo := productrepository.NewCreateVariantRepo(storage)
 		biz := productbusiness.NewCreateVariantBusiness(repo, sellerFinder, productFinder)
-		if err := biz.CreateVariant(context.Request.Context(), userId, int(uid.GetLoacalID()), &data); err != nil {
+		variant, err := biz.CreateVariant(context.Request.Context(), userId, int(uid.GetLoacalID()), &data)
+		if err != nil {
 			panic(common.ErrCannotCreateEntity("Variant", err))
 		}
-		context.JSON(200, common.SimpleSuccessResponse(true))
+		context.JSON(200, common.SimpleSuccessResponse(variant))
 	}
 }

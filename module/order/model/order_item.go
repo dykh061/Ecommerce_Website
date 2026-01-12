@@ -31,3 +31,14 @@ type OrderItemView struct {
 	Price     decimal.Decimal `json:"price"`
 	SubTotal  decimal.Decimal `json:"sub_total"`
 }
+
+type OrderItemDetailRow struct {
+	OrderItemID    int             `gorm:"column:order_item_id"`
+	VariantId      int             `gorm:"column:variant_id"`
+	Quantity       int             `gorm:"column:quantity"`
+	Price          decimal.Decimal `gorm:"column:price"`
+	ProductName    *string         `gorm:"column:product_name"`
+	ImageURL       *string         `gorm:"column:image_url"`
+	AttributeName  *string         `gorm:"column:attribute_name"`
+	AttributeValue *string         `gorm:"column:attribute_value"`
+}

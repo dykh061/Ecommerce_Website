@@ -30,6 +30,10 @@ func (VariantCreate) TableName() string {
 	return Variant{}.TableName()
 }
 
+func (v *VariantCreate) Mask() {
+	v.GenUID(common.DbTypeVariant)
+}
+
 type VariantUpdate struct {
 	Price         *decimal.Decimal `json:"price" gorm:"type:decimal(12,2)"`
 	StockQuantity *int             `json:"stock_quantity"`

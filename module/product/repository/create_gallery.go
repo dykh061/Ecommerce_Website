@@ -23,6 +23,9 @@ func NewCreateGalleryRepo(storage CreateGalleryStore) *createGalleryRepo {
 func (repo *createGalleryRepo) CreateProductGallery(
 	ctx context.Context,
 	data *productmodel.GalleryCreate,
-) error {
-	return repo.storage.CreateProductGallery(ctx, data)
+) (*productmodel.GalleryCreate, error) {
+	if err := repo.storage.CreateProductGallery(ctx, data); err != nil {
+		return nil, err
+	}
+	return data, nil
 }

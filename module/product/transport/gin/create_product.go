@@ -30,10 +30,11 @@ func CreateProduct(appCtx appctx.AppContext) gin.HandlerFunc {
 		productRepo := productrepository.NewCreateProductRepo(productStore)
 		sellerRepo := sellerrepository.NewGetSellerRepo(sellerStore)
 		biz := productbusiness.NewCreateProductBusiness(productRepo, sellerRepo)
-		if err := biz.CreateProduct(ctx.Request.Context(), requester.GetUserId(), &data); err != nil {
+		product, err := biz.CreateProduct(ctx.Request.Context(), requester.GetUserId(), &data)
+		if err != nil {
 			ctx.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		ctx.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
+		ctx.JSON(http.StatusOK, common.SimpleSuccessResponse(product))
 	}
 }

@@ -11,7 +11,7 @@ type CreateVariantRepo interface {
 		ctx context.Context,
 		productID int,
 		data *productmodel.VariantCreate,
-	) error
+	) (*productmodel.VariantCreate, error)
 }
 
 type createVariantBusiness struct {
@@ -37,21 +37,22 @@ func (biz *createVariantBusiness) CreateVariant(
 	userID int,
 	productID int,
 	data *productmodel.VariantCreate,
-) error {
+) (*productmodel.VariantCreate, error) {
 	seller, err := biz.sellerFinder.FindActiveSellerWithUserID(ctx, userID)
 	if err != nil || seller == nil {
-		return common.ErrEntityNotFound("Shop", err)
+		return nil, common.ErrEntityNotFound("Shop", err)
 	}
 	product, err := biz.productFinder.FindProductByIdWithSellerID(ctx, productID, seller.Id)
 	if err != nil || product == nil {
-		return common.ErrEntityNotFound("Product", err)
+		return nil, common.ErrEntityNotFound("Product", err)
 	}
 	if err := data.Validate(); err != nil {
-		return common.InvalidRequestError(err)
+		return nil, common.InvalidRequestError(err)
 	}
 	data.Sku = BuildSKUWithUID(seller.Id, productID)
-	if err := biz.variantRepo.CreateVariantWithAttributes(ctx, productID, data); err != nil {
-		return common.ErrCannotCreateEntity("Variant", err)
+	variant, err := biz.variantRepo.CreateVariantWithAttributes(ctx, productID, data)
+	if err != nil {
+		return nil, common.ErrCannotCreateEntity("Variant", err)
 	}
-	return nil
+	return variant, nil
 }

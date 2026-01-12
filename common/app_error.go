@@ -472,3 +472,18 @@ func ErrServiceUnavailable(service string, err error) *AppError {
 		"ErrServiceUnavailable",
 	)
 }
+
+// ErrVariantAlreadyExists
+// DÙNG KHI:
+// - Variant với cùng attribute_value_ids đã tồn tại
+//
+// HTTP: 400
+func ErrVariantAlreadyExists(err error) *AppError {
+	return NewFullErrorResponse(
+		http.StatusBadRequest,
+		err,
+		"Biến thể này đã tồn tại",
+		err.Error(),
+		"ErrVariantAlreadyExists",
+	)
+}

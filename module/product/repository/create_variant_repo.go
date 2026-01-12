@@ -1,6 +1,7 @@
 package productrepository
 
 import (
+	"OpenMarket/common"
 	productmodel "OpenMarket/module/product/model"
 	productstorage "OpenMarket/module/product/storage"
 	"context"
@@ -24,17 +25,20 @@ func NewCreateVariantRepo(storage CreateVariantStorage) *createVariantRepo {
 	return &createVariantRepo{storage: storage}
 }
 
+// ErrDuplicateVariant is returned when a variant with same attributes already exists
+var ErrDuplicateVariant = errors.New("variant with these attributes already exists")
+
 func (repo *createVariantRepo) CreateVariantWithAttributes(
 	ctx context.Context,
 	productID int,
 	data *productmodel.VariantCreate,
-) error {
+) (*productmodel.VariantCreate, error) {
 	data.ProductId = productID
 
 	// mở transaction để tạo variant và các attribute values liên quan
-	return repo.storage.WithTransaction(ctx, func(tx productstorage.TxStore) error {
+	err := repo.storage.WithTransaction(ctx, func(tx productstorage.TxStore) error {
 
-		// 1 thực hiện tìm kiếm variant đã tồn tại với các attribute values này chưa
+		// 1 thực hiện tìm kiếm variant đã tồn tại với các attribute values này chưa (chỉ variant active)
 		existedVariant, err := tx.FindVariantWithAtributesValue(ctx, productID, data.AttributeValueIDs)
 		if err != nil {
 			if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -43,9 +47,9 @@ func (repo *createVariantRepo) CreateVariantWithAttributes(
 			existedVariant = nil
 		}
 
-		// 2. nếu đã tồn tại thì chỉ cần điều chỉnh lại stock quantity
-		if existedVariant != nil && existedVariant.Id > 0 {
-			return tx.AdjustVariantStock(ctx, existedVariant.Id, data.StockQuantity)
+		// 2. nếu đã tồn tại VÀ variant đó đang active → trả lỗi ErrVariantAlreadyExists
+		if existedVariant != nil && existedVariant.Id > 0 && existedVariant.Status == common.SystemStatusActive {
+			return ErrDuplicateVariant
 		}
 
 		// 3. nếu chưa tồn tại thì thực hiện tạo mới variant
@@ -66,4 +70,14 @@ func (repo *createVariantRepo) CreateVariantWithAttributes(
 
 		return tx.CreateVariantAttributeValues(ctx, rows)
 	})
+
+	if err != nil {
+		if errors.Is(err, ErrDuplicateVariant) {
+			return nil, common.ErrVariantAlreadyExists(err)
+		}
+		return nil, err
+	}
+
+	data.Mask()
+	return data, nil
 }
