@@ -30,8 +30,7 @@ func (s *sqlStore) ListProduct(
 			db = db.Where("p.seller_id = ?", *f.SellerID)
 		}
 		if f.CategoryID != nil {
-			db = db.Joins("JOIN product_categories pc ON pc.product_id = p.id").
-				Where("pc.category_id = ?", *f.CategoryID)
+			db = db.Where("p.category_id = ?", *f.CategoryID)
 		}
 		if f.Search != nil {
 			db = db.Where("lower(p.name) like lower(?) or lower(p.description) like lower(?)",

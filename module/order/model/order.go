@@ -16,6 +16,7 @@ const (
 
 type Order struct {
 	Id          int             `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
+	SellerId    int             `json:"seller_id" gorm:"column:seller_id;index"`
 	UserId      int             `json:"user_id" gorm:"column:user_id;index"`
 	TotalAmount decimal.Decimal `json:"total_amount" gorm:"column:total_amount"`
 	Status      string          `json:"status" gorm:"column:status"`
@@ -26,7 +27,8 @@ type Order struct {
 func (Order) TableName() string { return "orders" }
 
 type OrderCreate struct {
-	UserId      int             `json:"-" gorm:"column:user_id"`
+	SellerId    int             `json:"-" gorm:"column:seller_id;index"`
+	UserId      int             `json:"-" gorm:"column:user_id;index"`
 	TotalAmount decimal.Decimal `json:"total_amount" gorm:"column:total_amount"`
 	Status      string          `json:"status" gorm:"column:status"`
 }

@@ -24,15 +24,10 @@ type CategoryUpdate struct {
 
 func (CategoryUpdate) TableName() string { return Category{}.TableName() }
 
-type ProductCategory struct {
-	ProductId  int `json:"product_id" gorm:"not null;index"`
-	CategoryId int `json:"category_id" gorm:"not null;index"`
+type categoryListItem struct {
+	Id       int    `json:"id" gorm:"column:id"`
+	Name     string `json:"name" gorm:"column:name"`
+	ParentId int    `json:"parent_id" gorm:"column:parent_id"`
 }
 
-func (ProductCategory) TableName() string { return "product_categories" }
-
-type ProductCategoryUpdate struct {
-	CategoryId *int `json:"category_id" gorm:"not null;index"`
-}
-
-func (ProductCategoryUpdate) TableName() string { return ProductCategory{}.TableName() }
+func (categoryListItem) TableName() string { return Category{}.TableName() }

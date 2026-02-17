@@ -41,13 +41,11 @@ func GetSellerProductDetail(appCtx appctx.AppContext) gin.HandlerFunc {
 		sfinder := sellerrepository.NewGetSellerRepo(sellerStorage)
 		pfinder := productrepository.NewFindProductRepo(productStorage)
 		galleriesRepo := productrepository.NewGetGalleriesRepo(productStorage)
-		categoryRepo := productrepository.NewGetProductCategoryRepo(productStorage)
 
 		biz := productbusiness.NewGetSellerProductDetailBusiness(
 			sfinder,
 			pfinder,
 			galleriesRepo,
-			categoryRepo,
 		)
 
 		result, err := biz.GetSellerProductDetail(c.Request.Context(), userID, productID)

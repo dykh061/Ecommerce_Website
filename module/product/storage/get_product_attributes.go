@@ -36,9 +36,9 @@ func (s *sqlStore) GetProductCategoryID(
 	productID int,
 ) (*int, error) {
 	var categoryID *int
-	if err := s.db.Table(productmodel.ProductCategory{}.TableName()).
+	if err := s.db.Table(productmodel.Product{}.TableName()).
 		Select("category_id").
-		Where("product_id = ?", productID).
+		Where("id = ?", productID).
 		Limit(1).
 		Scan(&categoryID).Error; err != nil {
 		return nil, err

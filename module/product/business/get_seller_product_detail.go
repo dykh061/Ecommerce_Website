@@ -15,31 +15,21 @@ type GetGalleriesRepo interface {
 	) ([]productmodel.GalleryItem, error)
 }
 
-type GetProductCategoryRepo interface {
-	GetProductCategoryID(
-		ctx context.Context,
-		productID int,
-	) (*int, error)
-}
-
 type getSellerProductDetailBusiness struct {
-	sfinder      FindSellerByID
-	pfinder      FindProductWithIDAndSellerID
+	sfinder       FindSellerByID
+	pfinder       FindProductWithIDAndSellerID
 	galleriesRepo GetGalleriesRepo
-	categoryRepo GetProductCategoryRepo
 }
 
 func NewGetSellerProductDetailBusiness(
 	sfinder FindSellerByID,
 	pfinder FindProductWithIDAndSellerID,
 	galleriesRepo GetGalleriesRepo,
-	categoryRepo GetProductCategoryRepo,
 ) *getSellerProductDetailBusiness {
 	return &getSellerProductDetailBusiness{
 		sfinder:       sfinder,
 		pfinder:       pfinder,
 		galleriesRepo: galleriesRepo,
-		categoryRepo:  categoryRepo,
 	}
 }
 
@@ -65,32 +55,22 @@ func (biz *getSellerProductDetailBusiness) GetSellerProductDetail(
 
 	// 3. Get galleries and category in parallel
 	var (
-		galleries  []productmodel.GalleryItem
-		categoryID *int
-		gErr       error
-		cErr       error
-		wg         sync.WaitGroup
+		galleries []productmodel.GalleryItem
+		gErr      error
+		wg        sync.WaitGroup
 	)
 
-	wg.Add(2)
+	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
 		galleries, gErr = biz.galleriesRepo.GetGalleries(ctx, productID)
 	}()
 
-	go func() {
-		defer wg.Done()
-		categoryID, cErr = biz.categoryRepo.GetProductCategoryID(ctx, productID)
-	}()
-
 	wg.Wait()
 
 	if gErr != nil {
 		return nil, common.ErrCannotListEntity("Gallery", gErr)
-	}
-	if cErr != nil {
-		return nil, common.ErrCannotListEntity("Category", cErr)
 	}
 
 	// 4. Build response
@@ -103,7 +83,6 @@ func (biz *getSellerProductDetailBusiness) GetSellerProductDetail(
 		Description: product.Description,
 		BasePrice:   product.BasePrice,
 		Status:      product.Status,
-		CategoryID:  categoryID,
 		SellerID:    sellerUID.String(),
 		CreatedAt:   product.CreatedAt,
 		UpdatedAt:   product.UpdatedAt,
