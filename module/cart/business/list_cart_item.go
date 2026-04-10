@@ -1,10 +1,9 @@
 package cartbusiness
 
 import (
+	"OpenMarket/common"
 	cartmodel "OpenMarket/module/cart/model"
 	"context"
-
-	"gorm.io/gorm"
 )
 
 type ListCartItemRepo interface {
@@ -33,7 +32,7 @@ func (biz *listCartItemBusiness) ListCartItem(
 ) (*cartmodel.CartView, error) {
 	cart, err := biz.repo.FindCart(ctx, userId)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if common.IsRecordNotFound(err) {
 			return &cartmodel.CartView{
 				Items: []cartmodel.CartItemView{},
 			}, nil

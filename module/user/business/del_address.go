@@ -4,9 +4,6 @@ import (
 	"OpenMarket/common"
 	usermodel "OpenMarket/module/user/model"
 	"context"
-	"errors"
-
-	"gorm.io/gorm"
 )
 
 type DeleteAddressStore interface {
@@ -33,7 +30,7 @@ func (biz *deleteAddressBusiness) DeleteAddress(
 	userId int,
 ) error {
 	if _, err := biz.store.FindAddressById(ctx, id, userId); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if common.IsRecordNotFound(err) {
 			return common.ErrEntityNotFound("User Address", err)
 		}
 		return common.ErrorDB(err)

@@ -5,8 +5,6 @@ import (
 	cartrepository "OpenMarket/module/cart/repository"
 	"context"
 	"errors"
-
-	"gorm.io/gorm"
 )
 
 type removeItemFromCartBusiness struct {
@@ -26,7 +24,7 @@ func (biz *removeItemFromCartBusiness) RemoveItemFromCart(
 	return biz.txRepo.WithTransaction(ctx, func(tx cartrepository.TxStore) error {
 		cart, err := tx.FindCart(ctx, userId)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+			if common.IsRecordNotFound(err) {
 				return common.InvalidRequestError(errors.New("cart not found"))
 			}
 			return common.ErrorDB(err)
@@ -34,7 +32,7 @@ func (biz *removeItemFromCartBusiness) RemoveItemFromCart(
 
 		item, err := tx.FindCartItem(ctx, cart.Id, variantId)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+			if common.IsRecordNotFound(err) {
 				return common.InvalidRequestError(errors.New("item not found in cart"))
 			}
 			return common.ErrorDB(err)

@@ -6,8 +6,6 @@ import (
 	cartrepository "OpenMarket/module/cart/repository"
 	"context"
 	"errors"
-
-	"gorm.io/gorm"
 )
 
 type addItemToCartBusiness struct {
@@ -37,7 +35,7 @@ func (biz *addItemToCartBusiness) AddItemToCart(
 		// 1. tìm cart
 		cart, err := tx.FindCart(ctx, userId)
 		if err != nil {
-			if !errors.Is(err, gorm.ErrRecordNotFound) {
+			if !common.IsRecordNotFound(err) {
 				return common.ErrorDB(err)
 			}
 		}
@@ -59,7 +57,7 @@ func (biz *addItemToCartBusiness) AddItemToCart(
 		// 3. tìm item
 		item, err := tx.FindCartItem(ctx, cart.Id, variantId)
 		if err != nil {
-			if !errors.Is(err, gorm.ErrRecordNotFound) {
+			if !common.IsRecordNotFound(err) {
 				return common.ErrorDB(err)
 			}
 		}

@@ -5,8 +5,6 @@ import (
 	sellermodel "OpenMarket/module/seller/model"
 	"context"
 	"errors"
-
-	"gorm.io/gorm"
 )
 
 type RegisterSellerRepo interface {
@@ -34,7 +32,7 @@ func NewCreateSellerBusiness(crepo RegisterSellerRepo, frepo FindSellerRepo) *cr
 func (biz *createSellerStore) CreateSeller(ctx context.Context, userId int, data *sellermodel.SellerCreate) error {
 	result, err := biz.frepo.FindSeller(ctx, userId)
 	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
+		if !common.IsRecordNotFound(err) {
 			return common.ErrorDB(err)
 		}
 	}
